@@ -33,7 +33,7 @@ def load_data(base_folder_path):
             for file in os.listdir(folder_path):
                 if file.endswith('.csv'):
                     # Check if the file relates to City of London
-                    if 'city-of-london'  in file.lower():
+                    if 'city-of-london' in file.lower():
                         files_to_load.append(os.path.join(folder_path, file))
 
     if len(files_to_load) == 0:
@@ -157,7 +157,7 @@ def get_crime_type_counts(df):
 # -------------------------------
 
 # Define the path to your extracted CSV files
-base_folder_path = r'C:\Users\theos\Downloads\922ca9480458c7842af50d981868fc9fce65aa62'
+base_folder_path = './data'  # Adjusted to your data directory in the project folder
 
 # Load and clean data from all date folders related to the City of London
 crime_data_raw = load_data(base_folder_path)
