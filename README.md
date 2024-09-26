@@ -38,5 +38,10 @@ The app is ready for deployment to services like Render, Heroku, or any other ho
 - Download filtered data for further analysis.
 
 
-## License
-This project is licensed under the MIT License.
+![image](https://github.com/user-attachments/assets/be1a5e69-bf0b-427b-9917-43747ffa848e)
+
+
+
+
+
+
