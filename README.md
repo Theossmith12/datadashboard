@@ -37,8 +37,6 @@ The app is ready for deployment to services like Render, Heroku, or any other ho
 - View crime trends over time through interactive charts.
 - Download filtered data for further analysis.
 
-## Contributing
-Pull requests are welcome. For significant changes, please open an issue first to discuss what you'd like to change.
 
 ## License
 This project is licensed under the MIT License.
