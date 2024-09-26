@@ -42,6 +42,7 @@ The app is ready for deployment to services like Render, Heroku, or any other ho
 
 
 
+![image](https://github.com/user-attachments/assets/9f80af63-b423-4c84-a98b-bd55fa52a168)
 
 
 
