@@ -1,0 +1,177 @@
+/* assets/styles.css */
+
+/* Apply a global dark theme */
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Header Styling */
+.header {
+    text-align: center;
+    padding: 20px 0;
+    animation: fadeInDown 1s ease-out;
+}
+
+.header h1 {
+    color: #1E90FF; /* Blue accent */
+    font-size: 3em;
+    margin-bottom: 10px;
+}
+
+.header p {
+    font-size: 1.2em;
+    color: #b3b3b3;
+}
+
+/* Filters Styling */
+.filters {
+    display: flex;
+    justify-content: center;
+    gap: 40px; /* Increased gap for better spacing */
+    padding: 20px 0;
+    animation: fadeInUp 1s ease-out;
+}
+
+.dropdown-container {
+    width: 300px;
+}
+
+/* Dropdown Styling */
+.dropdown {
+    background-color: #282828; /* Dark background */
+    color: #ffffff; /* White text */
+    border: 2px solid #1E90FF; /* Blue border */
+    border-radius: 8px; /* Rounded corners */
+    padding: 8px; /* Padding inside dropdown */
+    transition: border 0.3s, box-shadow 0.3s; /* Transition effects */
+    font-size: 1em; /* Font size */
+}
+
+.dropdown .Select-control {
+    background-color: #282828 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.dropdown .Select-placeholder {
+    color: #a0a0a0 !important;
+}
+
+.dropdown .Select-input {
+    color: #ffffff !important;
+}
+
+.dropdown .Select-menu-outer {
+    background-color: #282828 !important;
+    border: 2px solid #1E90FF !important;
+}
+
+.dropdown .Select-option {
+    color: #ffffff !important;
+}
+
+.dropdown .Select-option--is-focused {
+    background-color: #1E90FF !important;
+    color: #121212 !important;
+}
+
+.dropdown:hover {
+    border: 2px solid #1E90FF; /* Blue border on hover */
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.5); /* Blue glow on hover */
+}
+
+/* Graphs Styling */
+.graph-container {
+    padding: 20px;
+    animation: fadeIn 1s ease-out;
+}
+
+/* Summary Statistics Styling */
+.summary {
+    padding: 20px;
+    background-color: #1f1f1f;
+    border-radius: 10px;
+    margin: 20px auto;
+    width: 80%;
+    animation: fadeIn 1s ease-out;
+}
+
+.summary h2 {
+    color: #1E90FF; /* Blue accent */
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.summary ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.summary li {
+    padding: 5px 0;
+    font-size: 1.1em;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Navigation Bar Styling */
+.navbar {
+    background-color: #1f1f1f;
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    animation: fadeInDown 1s ease-out;
+}
+
+.navbar a {
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 1.2em;
+    transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+    color: #1E90FF; /* Blue accent on hover */
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+}
