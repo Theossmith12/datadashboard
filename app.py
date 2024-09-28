@@ -1,5 +1,3 @@
-# app.py
-
 import pandas as pd
 import os
 import glob
@@ -51,7 +49,6 @@ def load_data(base_folder_path):
 
     return pd.concat(df_list, ignore_index=True)
 
-
 def clean_data(df):
     """
     Clean and preprocess the DataFrame.
@@ -78,12 +75,10 @@ def clean_data(df):
 
     return df.reset_index(drop=True)
 
-
 # Cache the loaded data to avoid reloading unnecessarily
 @lru_cache(maxsize=1)
 def load_cached_data(base_folder_path):
     return load_data(base_folder_path)
-
 
 # -------------------------------
 # Dash Dashboard Setup
@@ -96,7 +91,7 @@ app.title = 'UK Crime Data Dashboard'
 server = app.server  # Expose the server variable for deployments
 
 # Load data
-base_folder_path = r'C:\Users\theos\Downloads\922ca9480458c7842af50d981868fc9fce65aa62'
+base_folder_path = os.path.join(os.path.dirname(__file__), 'data')  # Updated to use the data directory
 crime_data_raw = load_cached_data(base_folder_path)
 crime_data = clean_data(crime_data_raw)
 
@@ -117,7 +112,7 @@ navbar = html.Div(
 )
 
 # Define the app layout with page content
-app.layout = html.Div([
+app.layout = html.Div([  # Define the app layout
     dcc.Location(id='url', refresh=False),
     navbar,
     html.Div(id='page-content')
@@ -292,7 +287,6 @@ def generate_map(filtered_data, map_view):
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         uirevision='constant',  # Prevent map from refreshing unnecessarily
         dragmode='pan'           # Allow panning
-        # Removed 'scrollZoom' from update_layout
     )
 
 def generate_time_series(filtered_data):
