@@ -745,6 +745,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\data\2021-12-metropolitan-street.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\data\2024-04-metropolitan-street.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
