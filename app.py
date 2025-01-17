@@ -28,7 +28,12 @@ def load_data():
     """
     try:
 
-        DATABASE_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+        DB_USER = os.getenv('DB_USER')
+        DB_PASS = os.getenv('DB_PASSWORD')
+        DB_NAME = os.getenv('DB_NAME')
+        DB_CONN_NAME = os.getenv('INSTANCE_CONNECTION_NAME')
+
+        DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/{DB_NAME}?host=/cloudsql/{DB_CONN_NAME}"
 
         # PostgreSQL connection setup
         engine = create_engine(DATABASE_URL)
@@ -575,9 +580,7 @@ def update_summary_statistics(selected_outcomes, selected_crimes):
         ])
     ]
 
-# -------------------------------
-# Run the App
-# -------------------------------
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))  # Use Cloud Run's assigned port
-    app.run(host='0.0.0.0', port=port, debug=True)
+    port = int(os.environ.get("PORT", 8080))  # Cloud Run provides PORT
+    app.run(host="0.0.0.0", port=port, debug=True)
