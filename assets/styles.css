@@ -30,13 +30,12 @@ body {
 .filters {
     display: flex;
     justify-content: center;
-    gap: 40px; /* Increased gap for better spacing */
+    gap: 20px; /* Adjusted gap for better spacing */
     padding: 20px 0;
     animation: fadeInUp 1s ease-out;
 }
 
 .dropdown-container {
-    /* width: 300px; Removed fixed width */
     width: 100%; /* Take full width on small screens */
     max-width: 300px; /* But don't exceed 300px on larger screens */
 }
@@ -69,6 +68,9 @@ body {
 .dropdown .Select-menu-outer {
     background-color: #282828 !important;
     border: 2px solid #1E90FF !important;
+    /* Limit the height and add scroll */
+    max-height: 200px !important;
+    overflow-y: auto !important;
 }
 
 .dropdown .Select-option {
@@ -85,6 +87,22 @@ body {
     box-shadow: 0 0 10px rgba(30, 144, 255, 0.5); /* Blue glow on hover */
 }
 
+/* Button Styling */
+.select-all-btn, .deselect-all-btn {
+    background-color: #1E90FF; /* Blue background */
+    color: #fff; /* White text */
+    border: none;
+    border-radius: 5px; /* Rounded corners */
+    padding: 5px 10px;
+    margin-top: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.select-all-btn:hover, .deselect-all-btn:hover {
+    background-color: #0d47a1; /* Darker blue on hover */
+}
+
 /* Graphs Styling */
 .graph-container {
     padding: 20px;
@@ -97,7 +115,6 @@ body {
     background-color: #1f1f1f;
     border-radius: 10px;
     margin: 20px auto;
-    /* width: 80%; Removed fixed width */
     width: 95%; /* More responsive width */
     max-width: 800px; /* But don't exceed 800px */
     animation: fadeIn 1s ease-out;
@@ -194,14 +211,27 @@ html {
 
     /* Filter adjustments */
     .filters {
-        flex-direction: column; /* Stack filters vertically */
+        flex-direction: row; /* Keep filters on the same line */
         align-items: center;
         gap: 10px;
+        padding: 10px 0;
+        flex-wrap: wrap; /* Allow wrapping for very small screens */
     }
 
     .dropdown-container {
-        width: 95%; /* Make dropdown containers take full width */
-        max-width: none; /* Remove max-width on small screens */
+        width: auto; /* Let containers take needed width */
+        flex: 1; /* Each container takes equal available space */
+        max-width: none; /* Remove max-width */
+        margin-right: 0; /* Remove margin-right */
+    }
+
+    .dropdown {
+        font-size: 0.9em; /* Slightly smaller font size */
+    }
+
+    .Select-menu-outer {
+        /* Remove max-height restriction on mobile */
+        max-height: none !important;
     }
 
     /* Summary adjustments */
@@ -249,4 +279,46 @@ html {
         width: 90%;
     }
 
+    /* Hide dropdown options on mobile by default */
+    .dropdown .Select-menu-outer {
+        display: none;
+    }
+
+    /* Show dropdown options when dropdown is focused */
+    .dropdown.is-open .Select-menu-outer {
+        display: block;
+    }
+
+    /* Scatter Map Styling */
+    #crime-scatter-map {
+        position: relative;
+        width: 100vw; /* Full viewport width */
+        height: 50vh; /* 50% of viewport height */
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+    }
+
+    /* Heatmap Styling */
+    #crime-heatmap {
+        position: relative;
+        width: 100vw; /* Full viewport width */
+        height: 50vh; /* 50% of viewport height */
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+    }
+
+    /* Time Series Plot */
+    #time-series-plot {
+        position: relative;
+        width: 100vw; /* Full viewport width */
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+    }
+    
 }
