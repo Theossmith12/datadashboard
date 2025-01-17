@@ -1,7 +1,6 @@
 # app.py
 
 import pandas as pd
-import os
 import logging
 from functools import lru_cache
 import dash
@@ -12,6 +11,10 @@ import plotly.graph_objs as go
 from pages.statistics import statistics_layout  # Import the statistics page layout
 import data_processing  # Import the data processing module
 from sqlalchemy import create_engine
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # <-- This line must be at the top
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(message)s')
@@ -24,8 +27,11 @@ def load_data():
     Load all crime data from the PostgreSQL database.
     """
     try:
+
+        DATABASE_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+
         # PostgreSQL connection setup
-        engine = create_engine('postgresql://crime_user:password@localhost:5432/crime_data')
+        engine = create_engine(DATABASE_URL)
         
         # SQL query to fetch all data
         query = "SELECT * FROM crime_records"
@@ -572,6 +578,6 @@ def update_summary_statistics(selected_outcomes, selected_crimes):
 # -------------------------------
 # Run the App
 # -------------------------------
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))  # Use Cloud Run's assigned port
+    app.run(host='0.0.0.0', port=port, debug=True)
