@@ -145,7 +145,7 @@ def dashboard_layout():
                         dcc.Dropdown(
                             id='outcome-type-dropdown',
                             options=outcome_options,
-                            value=[option['value'] for option in outcome_options],  # Select all by default
+                            value=[],  # Select all by default
                             multi=True,
                             placeholder='Select Outcome Type(s)',
                             className='dropdown',
