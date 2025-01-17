@@ -36,7 +36,9 @@ body {
 }
 
 .dropdown-container {
-    width: 300px;
+    /* width: 300px; Removed fixed width */
+    width: 100%; /* Take full width on small screens */
+    max-width: 300px; /* But don't exceed 300px on larger screens */
 }
 
 /* Dropdown Styling */
@@ -95,7 +97,9 @@ body {
     background-color: #1f1f1f;
     border-radius: 10px;
     margin: 20px auto;
-    width: 80%;
+    /* width: 80%; Removed fixed width */
+    width: 95%; /* More responsive width */
+    max-width: 800px; /* But don't exceed 800px */
     animation: fadeIn 1s ease-out;
 }
 
@@ -174,4 +178,75 @@ body {
 /* Smooth Scrolling */
 html {
     scroll-behavior: smooth;
+}
+
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 768px) {
+
+    /* Header text resizing */
+    .header h1 {
+        font-size: 2em; /* Reduce font size on smaller screens */
+    }
+
+    .header p {
+        font-size: 1em; /* Reduce font size on smaller screens */
+    }
+
+    /* Filter adjustments */
+    .filters {
+        flex-direction: column; /* Stack filters vertically */
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dropdown-container {
+        width: 95%; /* Make dropdown containers take full width */
+        max-width: none; /* Remove max-width on small screens */
+    }
+
+    /* Summary adjustments */
+    .summary {
+        width: 95%; /* Make summary take almost full width */
+        margin: 10px auto; /* Reduce margin */
+    }
+
+    .summary li {
+        font-size: 1em; /* Reduce font size */
+    }
+
+    /* Navigation adjustments */
+    .navbar {
+        gap: 20px; /* Reduce gap between links */
+        padding: 10px;
+    }
+
+    .navbar a {
+        font-size: 1em; /* Reduce font size */
+    }
+
+    /* Graph adjustments */
+    .graph-container {
+        padding: 10px; /* Reduce padding around graphs */
+    }
+    .graph-container h2 {
+        font-size: 1.5em;
+    }
+    .graph-container {
+        width: 100%;
+    }
+    .graph-container .dcc-graph {
+        width: 100%;
+    }
+    .graph-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .Select-menu-outer {
+        position: relative;
+    }
+    .graph-container .dcc-graph {
+        width: 90%;
+    }
+
 }

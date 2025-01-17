@@ -20,7 +20,6 @@ scikit-learn==1.5.0
 psycopg2-binary
 SQLAlchemy
 cloud-sql-python-connector[pg8000]
-psycopg2-binary
 google-auth-oauthlib
 google-auth-httplib2  
 google-api-python-client
