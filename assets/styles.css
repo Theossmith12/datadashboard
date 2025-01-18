@@ -1,11 +1,13 @@
-/* assets/styles.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
-/* Apply a global dark theme */
+/* Global Dark Theme */
 body {
     background-color: #121212;
     color: #e0e0e0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Poppins',sans-serif;
     transition: background-color 0.5s ease, color 0.5s ease;
+    margin: 0;
+    padding: 0;
 }
 
 /* Header Styling */
@@ -29,26 +31,28 @@ body {
 /* Filters Styling */
 .filters {
     display: flex;
-    justify-content: center;
-    gap: 20px; /* Adjusted gap for better spacing */
-    padding: 20px 0;
+    justify-content: space-between;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    padding: 20px;
     animation: fadeInUp 1s ease-out;
 }
 
 .dropdown-container {
-    width: 100%; /* Take full width on small screens */
-    max-width: 300px; /* But don't exceed 300px on larger screens */
+    flex: 1 1 45%; /* Occupy 45% of the width on larger screens */
+    min-width: 250px;
+    margin: 10px 2.5%;
 }
 
 /* Dropdown Styling */
 .dropdown {
-    background-color: #282828; /* Dark background */
-    color: #ffffff; /* White text */
-    border: 2px solid #1E90FF; /* Blue border */
-    border-radius: 8px; /* Rounded corners */
-    padding: 8px; /* Padding inside dropdown */
-    transition: border 0.3s, box-shadow 0.3s; /* Transition effects */
-    font-size: 1em; /* Font size */
+    background-color: #282828;
+    color: #ffffff;
+    border: 2px solid #1E90FF;
+    border-radius: 8px;
+    padding: 8px;
+    transition: border 0.3s, box-shadow 0.3s;
+    font-size: 1em;
+    width: 100%;
 }
 
 .dropdown .Select-control {
@@ -68,7 +72,6 @@ body {
 .dropdown .Select-menu-outer {
     background-color: #282828 !important;
     border: 2px solid #1E90FF !important;
-    /* Limit the height and add scroll */
     max-height: 200px !important;
     overflow-y: auto !important;
 }
@@ -83,24 +86,25 @@ body {
 }
 
 .dropdown:hover {
-    border: 2px solid #1E90FF; /* Blue border on hover */
-    box-shadow: 0 0 10px rgba(30, 144, 255, 0.5); /* Blue glow on hover */
+    border: 2px solid #1E90FF;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
 }
 
 /* Button Styling */
 .select-all-btn, .deselect-all-btn {
-    background-color: #1E90FF; /* Blue background */
-    color: #fff; /* White text */
+    background-color: #1E90FF;
+    color: #fff;
     border: none;
-    border-radius: 5px; /* Rounded corners */
-    padding: 5px 10px;
+    border-radius: 5px;
+    padding: 8px 12px;
     margin-top: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    margin-right: 5px;
 }
 
 .select-all-btn:hover, .deselect-all-btn:hover {
-    background-color: #0d47a1; /* Darker blue on hover */
+    background-color: #0d47a1;
 }
 
 /* Graphs Styling */
@@ -109,19 +113,25 @@ body {
     animation: fadeIn 1s ease-out;
 }
 
+.graph-container h2 {
+    color: #e0e0e0;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
 /* Summary Statistics Styling */
 .summary {
     padding: 20px;
     background-color: #1f1f1f;
     border-radius: 10px;
     margin: 20px auto;
-    width: 95%; /* More responsive width */
-    max-width: 800px; /* But don't exceed 800px */
+    width: 95%;
+    max-width: 800px;
     animation: fadeIn 1s ease-out;
 }
 
 .summary h2 {
-    color: #1E90FF; /* Blue accent */
+    color: #1E90FF;
     text-align: center;
     margin-bottom: 15px;
 }
@@ -185,11 +195,12 @@ body {
     color: #e0e0e0;
     text-decoration: none;
     font-size: 1.2em;
+    font-weight: 600;
     transition: color 0.3s ease;
 }
 
 .navbar a:hover {
-    color: #1E90FF; /* Blue accent on hover */
+    color: #1E90FF;
 }
 
 /* Smooth Scrolling */
@@ -202,123 +213,92 @@ html {
 
     /* Header text resizing */
     .header h1 {
-        font-size: 2em; /* Reduce font size on smaller screens */
+        font-size: 2em;
     }
 
     .header p {
-        font-size: 1em; /* Reduce font size on smaller screens */
+        font-size: 1.2em;
+        color: #b3b3b3;
+        text-align: center;    /* Center the text */
+        margin: 0 auto;        /* Center the block */
+        max-width: 800px;      /* Optional: Limit the width for better readability */
+        line-height: 1.6;      /* Optional: Improves readability */
     }
+    
 
     /* Filter adjustments */
     .filters {
-        flex-direction: row; /* Keep filters on the same line */
-        align-items: center;
-        gap: 10px;
-        padding: 10px 0;
-        flex-wrap: wrap; /* Allow wrapping for very small screens */
+        flex-direction: row; /* Keeping row layout */
+        justify-content: space-between;
+        padding: 10px 5%;
     }
 
     .dropdown-container {
-        width: auto; /* Let containers take needed width */
-        flex: 1; /* Each container takes equal available space */
-        max-width: none; /* Remove max-width */
-        margin-right: 0; /* Remove margin-right */
+        flex: 1 1 45%;
+        margin: 10px 2.5%;
     }
 
+    /* Dropdown Font Size */
     .dropdown {
-        font-size: 0.9em; /* Slightly smaller font size */
-    }
-
-    .Select-menu-outer {
-        /* Remove max-height restriction on mobile */
-        max-height: none !important;
+        font-size: 0.9em;
     }
 
     /* Summary adjustments */
     .summary {
-        width: 95%; /* Make summary take almost full width */
-        margin: 10px auto; /* Reduce margin */
+        width: 95%;
+        margin: 10px auto;
     }
 
     .summary li {
-        font-size: 1em; /* Reduce font size */
+        font-size: 1em;
     }
 
     /* Navigation adjustments */
     .navbar {
-        gap: 20px; /* Reduce gap between links */
+        flex-direction: 20px 10px;
+        gap: 20px;
         padding: 10px;
     }
 
     .navbar a {
-        font-size: 1em; /* Reduce font size */
+        font-size: 1.2em;
+        padding: 10px 0;
+        width: 100%;
+        text-align: center;
     }
 
     /* Graph adjustments */
     .graph-container {
-        padding: 10px; /* Reduce padding around graphs */
+        padding: 10px;
     }
+
     .graph-container h2 {
         font-size: 1.5em;
     }
-    .graph-container {
-        width: 100%;
-    }
+
+    /* Ensure all graphs take full width in a mobile layout */
     .graph-container .dcc-graph {
         width: 100%;
-    }
-    .graph-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    .Select-menu-outer {
-        position: relative;
-    }
-    .graph-container .dcc-graph {
-        width: 90%;
+        height: auto;
     }
 
-    /* Hide dropdown options on mobile by default */
-    .dropdown .Select-menu-outer {
-        display: none;
+    /* FORCE full-width on mobile for specific containers that have 'full-width-mobile' */
+    .graph-container.full-width-mobile {
+        width: 100% !important;       /* Override any width */
+        display: block !important;    /* Stack vertically on mobile */
+        padding: 10px 0 !important;   /* Adjust padding for better spacing */
     }
 
-    /* Show dropdown options when dropdown is focused */
-    .dropdown.is-open .Select-menu-outer {
-        display: block;
+    /* Center headings in these specific containers */
+    .graph-container.full-width-mobile h2 {
+        font-size: 1.4em;
+        text-align: center;
+        margin-bottom: 10px;
     }
 
-    /* Scatter Map Styling */
-    #crime-scatter-map {
-        position: relative;
-        width: 100vw; /* Full viewport width */
-        height: 50vh; /* 50% of viewport height */
-        left: 50%;
-        right: 50%;
-        margin-left: -50vw;
-        margin-right: -50vw;
+    /* Ensure graphs themselves are responsive */
+    .graph-container.full-width-mobile .dcc-graph {
+        width: 100% !important;
+        height: auto !important;
     }
-
-    /* Heatmap Styling */
-    #crime-heatmap {
-        position: relative;
-        width: 100vw; /* Full viewport width */
-        height: 50vh; /* 50% of viewport height */
-        left: 50%;
-        right: 50%;
-        margin-left: -50vw;
-        margin-right: -50vw;
-    }
-
-    /* Time Series Plot */
-    #time-series-plot {
-        position: relative;
-        width: 100vw; /* Full viewport width */
-        left: 50%;
-        right: 50%;
-        margin-left: -50vw;
-        margin-right: -50vw;
-    }
-    
 }
