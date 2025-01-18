@@ -116,7 +116,7 @@ def statistics_layout(crime_data):
         if not stats_sections:
             stats_sections.append(
                 html.Div(
-                    "No additional statistical data available.",
+                    "",
                     style={
                         'color': '#e0e0e0',
                         'textAlign': 'center',
@@ -131,8 +131,8 @@ def statistics_layout(crime_data):
                 html.Div(
                     className='header',
                     children=[
-                        html.H1('Additional Statistical Insights'),
-                        html.P('Explore more detailed statistical observations and analyses related to the crime data.')
+                        html.H1('Still building models  :-)'),
+            
                     ]
                 ),
 

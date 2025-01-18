@@ -1,5 +1,3 @@
-# app.py
-
 import pandas as pd
 import logging
 from functools import lru_cache
@@ -27,13 +25,15 @@ def load_data():
     Load all crime data from the PostgreSQL database.
     """
     try:
-
         DB_USER = os.getenv('DB_USER')
         DB_PASS = os.getenv('DB_PASSWORD')
         DB_NAME = os.getenv('DB_NAME')
         DB_CONN_NAME = os.getenv('INSTANCE_CONNECTION_NAME')
-
+        # If deploying to Cloud Run, uncomment the line below and remove the local line.
         DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/{DB_NAME}?host=/cloudsql/{DB_CONN_NAME}"
+        
+        # For local usage, replace with your own credentials/URL:
+        #DATABASE_URL = "postgresql+psycopg2://postgres:Fluminense99@localhost:5432/crime_data"
 
         # PostgreSQL connection setup
         engine = create_engine(DATABASE_URL)
@@ -93,7 +93,7 @@ navbar = html.Div(
 )
 
 # Define the app layout with page content
-app.layout = html.Div([  # Define the app layout
+app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     navbar,
     html.Div(id='page-content')
@@ -130,11 +130,13 @@ def dashboard_layout():
                     className='header',
                     children=[
                         html.H1('UK Crime Data Interactive Dashboard', style={'color': '#e0e0e0'}),
-                        html.P('''This dashboard presents street-level crime data from Metropolitan areas from 2021 - July 2024.
-                                The data includes various crimes reported, their locations, and the outcomes.
-                                Use the filters below to explore the data. The visualizations show trends,
-                                outcomes, and crime type statistics over time. Note the map only displays up to 10,000 incidents.''',
-                               style={'color': '#e0e0e0'})
+                        html.P(
+                            '''This dashboard presents street-level crime data from Metropolitan areas from 2021 - July 2024.
+                            The data includes various crimes reported, their locations, and the outcomes.
+                            Use the filters below to explore the data. The visualizations show trends,
+                            outcomes, and crime type statistics over time. Note the map only displays up to 10,000 incidents.''',
+                            style={'color': '#e0e0e0'}
+                        )
                     ]
                 ),
 
@@ -145,7 +147,7 @@ def dashboard_layout():
                         dcc.Dropdown(
                             id='outcome-type-dropdown',
                             options=outcome_options,
-                            value=[],  # Select all by default
+                            value=[option['value'] for option in outcome_options],
                             multi=True,
                             placeholder='Select Outcome Type(s)',
                             className='dropdown',
@@ -153,14 +155,14 @@ def dashboard_layout():
                         ),
                         html.Button('Select All', id='select-all-outcome', n_clicks=0, className='select-all-btn', style={'margin-top': '5px'}),
                         html.Button('Deselect All', id='deselect-all-outcome', n_clicks=0, className='deselect-all-btn', style={'margin-top': '5px'}),
-                    ], className='dropdown-container', style={'width': '45%', 'display': 'inline-block', 'margin-right': '5%'}),
+                    ], className='dropdown-container'),
 
                     html.Div([
                         html.Label('Select Crime Type:', style={'font-weight': 'bold', 'color': '#e0e0e0'}),
                         dcc.Dropdown(
                             id='crime-type-dropdown',
                             options=crime_type_options,
-                            value=[option['value'] for option in crime_type_options],  # Select all by default
+                            value=[],  # Select all by default
                             multi=True,
                             placeholder='Select Crime Type(s)',
                             className='dropdown',
@@ -168,8 +170,8 @@ def dashboard_layout():
                         ),
                         html.Button('Select All', id='select-all-crime', n_clicks=0, className='select-all-btn', style={'margin-top': '5px'}),
                         html.Button('Deselect All', id='deselect-all-crime', n_clicks=0, className='deselect-all-btn', style={'margin-top': '5px'}),
-                    ], className='dropdown-container', style={'width': '45%', 'display': 'inline-block'}),
-                ], className='filters', style={'padding': '20px'}),
+                    ], className='dropdown-container'),
+                ], className='filters'),
 
                 # Loading Indicators
                 dcc.Loading(
@@ -180,67 +182,88 @@ def dashboard_layout():
                         html.Div(
                             dcc.Graph(
                                 id='crime-scatter-map',
-                                config={'displayModeBar': False, 'scrollZoom': True},  # Enabled scrollZoom here
+                                config={'displayModeBar': False, 'scrollZoom': True},
                                 style={'height': '600px'}
                             ),
-                            className='graph-container',
-                            style={'width': '100%', 'padding': '10px'}
+                            className='graph-container'
                         ),
 
                         # Heatmap with Label
                         html.Div([
-                            html.H2('Crime Density Heatmap', style={'color': '#e0e0e0', 'textAlign': 'center'}),
                             dcc.Graph(
                                 id='crime-heatmap',
                                 config={
-                                    'displayModeBar': True,    # show the bar with zoom, fullscreen, etc.
-                                    'scrollZoom': True,        # allow trackpad/mousewheel zoom
-                                    'doubleClick': 'reset',    # optional: double-click to reset
-                                    'showTips': True           # optional: show tips on how to interact
+                                    'displayModeBar': False,
+                                    'scrollZoom': True,
+                                    'doubleClick': 'reset',
+                                    'showTips': False
                                 },
                                 style={'height': '600px'}
                             )
-                        ], className='graph-container', style={'width': '100%', 'padding': '10px'}),
+                        ], className='graph-container'),
 
                         # Time Series Plot
                         html.Div([
-                            html.H2('Crime Trends Over Time', style={'color': '#e0e0e0'}),
-                            dcc.Graph(id='time-series-plot')
-                        ], className='graph-container', style={'width': '100%', 'padding': '10px'}),
+                            html.H2('Crime Trends Over Time'),
+                            dcc.Graph(
+                                id='time-series-plot',
+                                config={
+                                    'displayModeBar': False,
+                                    'scrollZoom': False,
+                                    'staticPlot':True
+                                }
+                            )   
+                        ], className='graph-container'),
 
                         # Bar Chart of Crime Outcomes
                         html.Div([
-                            html.H2('Crime Outcomes Statistics', style={'color': '#e0e0e0'}),
-                            dcc.Graph(id='outcome-bar-chart')
-                        ], className='graph-container', style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
+                            html.H2('Crime Outcomes Statistics'),
+                            dcc.Graph(id='outcome-bar-chart',
+                                      config = {"displayModeBar":False,
+                                                "scrollZoom": False,
+                                                "staticPlot": True}
+                                      
+                                      )
+                        ],
+                            className='graph-container full-width-mobile'
+                        ),
 
                         # Crime Type Bar Chart
                         html.Div([
-                            html.H2('Most Common Crime Types', style={'color': '#e0e0e0'}),
-                            dcc.Graph(id='crime-type-bar-chart')
-                        ], className='graph-container', style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
+                            html.H2('Most Common Crime Types'),
+                            dcc.Graph(id='crime-type-bar-chart',
+                                      config = {"displayModeBar":False,
+                                                "scrollZoom": False,
+                                                "staticPlot": True}
+                                      )
+                        ],
+                            className='graph-container full-width-mobile'
+                        ),
 
                         # Yearly Comparison of Crime Types
                         html.Div([
-                            html.H2('Crime Type Trends Over the Years', style={'color': '#e0e0e0'}),
-                            dcc.Graph(id='yearly-comparison-chart')
-                        ], className='graph-container', style={'width': '100%', 'padding': '10px'}),
+                            html.H2('Crime Type Trends Over the Years'),
+                            dcc.Graph(id='yearly-comparison-chart',
+                                      config = {"displayModeBar":False,
+                                                "scrollZoom": False,
+                                                "staticPlot": True}
+                                      )
+                        ], className='graph-container'),
                     ]
                 ),
 
                 # Summary Statistics Section
                 html.Div(
-                    id='summary-statistics',  # Assign a unique ID for dynamic updates
+                    id='summary-statistics',
                     className='summary',
-                    style={'padding': '20px'},
                     children=[
-                        html.H2('Summary Statistics', style={'color': '#e0e0e0'}),
+                        html.H2('Summary Statistics'),
                         html.Ul([
                             # Placeholder list items; will be updated via callback
-                            html.Li("Total number of crimes: Loading...", style={'color': '#e0e0e0'}),
-                            html.Li("Most common crime type: Loading...", style={'color': '#e0e0e0'}),
-                            html.Li("Most common outcome type: Loading...", style={'color': '#e0e0e0'}),
-                            html.Li("Data covers from Loading... to Loading...", style={'color': '#e0e0e0'}),
+                            html.Li("Total number of crimes: Loading..."),
+                            html.Li("Most common crime type: Loading..."),
+                            html.Li("Most common outcome type: Loading..."),
+                            html.Li("Data covers from Loading... to Loading..."),
                         ])
                     ]
                 ),
@@ -250,7 +273,6 @@ def dashboard_layout():
 # -------------------------------
 # Update Page Content
 # -------------------------------
-
 @app.callback(
     Output('page-content', 'children'),
     [Input('url', 'pathname')]
@@ -264,7 +286,6 @@ def display_page(pathname):
 # -------------------------------
 # Select/Deselect All Callbacks
 # -------------------------------
-
 @app.callback(
     Output('outcome-type-dropdown', 'value'),
     [
@@ -309,7 +330,6 @@ def select_deselect_crime(select_all_clicks, deselect_all_clicks, options):
 # Callback Functions
 # -------------------------------
 
-# Add a cap for maximum points to load
 MAX_POINTS = 10000
 
 def generate_map(filtered_data, map_view):
@@ -317,10 +337,16 @@ def generate_map(filtered_data, map_view):
     Generate the scatter mapbox figure.
     """
     if map_view:
-        center = map_view.get('mapbox.center', {'lat': filtered_data['latitude'].mean(), 'lon': filtered_data['longitude'].mean()})
+        center = map_view.get('mapbox.center', {
+            'lat': filtered_data['latitude'].mean(),
+            'lon': filtered_data['longitude'].mean()
+        })
         zoom = map_view.get('mapbox.zoom', 6)
     else:
-        center = {'lat': filtered_data['latitude'].mean(), 'lon': filtered_data['longitude'].mean()}
+        center = {
+            'lat': filtered_data['latitude'].mean(),
+            'lon': filtered_data['longitude'].mean()
+        }
         zoom = 6
 
     map_fig = px.scatter_mapbox(
@@ -339,8 +365,8 @@ def generate_map(filtered_data, map_view):
         plot_bgcolor='#121212',
         font_color='#e0e0e0',
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
-        uirevision='constant',  # Prevent map from refreshing unnecessarily
-        dragmode='pan'           # Allow panning
+        uirevision='constant',
+        dragmode='pan'
     )
 
 def generate_heatmap(filtered_data):
@@ -351,17 +377,14 @@ def generate_heatmap(filtered_data):
         logging.warning("Filtered data is empty, cannot generate heatmap.")
         return go.Figure()
 
-    # Copy the filtered DataFrame so we don't modify the original
     heatmap_data = filtered_data.copy()
-    # Create a dummy column with a constant value of 1
     heatmap_data['density_val'] = 1
 
-    # Now pass 'density_val' for z
     heatmap_fig = px.density_mapbox(
         heatmap_data,
         lat='latitude',
         lon='longitude',
-        z='density_val',  # <--- reference the dummy column here
+        z='density_val',
         radius=20,
         center=dict(
             lat=heatmap_data['latitude'].mean(),
@@ -369,10 +392,9 @@ def generate_heatmap(filtered_data):
         ),
         zoom=10,
         mapbox_style="open-street-map",
-        # Choose a color scale that transitions from light to dark red
         color_continuous_scale='YlOrRd',
-        title='Crime Density Heatmap'
     )
+    heatmap_fig.update_traces(opacity=0.5)
 
     heatmap_fig.update_layout(
         paper_bgcolor='#121212',
@@ -389,84 +411,96 @@ def generate_heatmap(filtered_data):
 
     return heatmap_fig
 
-
 def generate_time_series(filtered_data):
     if 'month' not in filtered_data.columns:
         logging.warning("'month' column not found for time series plot.")
-        return {}
+        return go.Figure()
+
     if filtered_data.empty:
         logging.warning("Filtered data is empty, cannot generate time series.")
         return go.Figure()
+
     time_series_filtered = data_processing.get_time_series_data(filtered_data)
     logging.info(f"Generating Time Series Plot with data:\n{time_series_filtered.head()}")
-    return px.line(
+    fig = px.line(
         time_series_filtered,
         x='month',
         y='Count',
-        title='Crime Incidents Over Time',
         labels={'Count': 'Number of Crimes', 'month': 'Month'},
         template='plotly_dark'
-    ).update_layout(
+    )
+    fig.update_layout(
         paper_bgcolor='#121212',
         plot_bgcolor='#121212',
         font_color='#e0e0e0'
     )
+    return fig
 
 def generate_outcome_bar_chart(filtered_data):
     if 'outcome_type' not in filtered_data.columns:
         logging.warning("'outcome_type' column not found for outcome bar chart.")
-        return {}
+        return go.Figure()
+
     if filtered_data.empty:
         logging.warning("Filtered data is empty, cannot generate outcome bar chart.")
         return go.Figure()
+
     outcome_counts_filtered = data_processing.get_outcome_counts(filtered_data)
     logging.info(f"Generating Outcome Bar Chart with data:\n{outcome_counts_filtered.head()}")
-    return px.bar(
+    fig = px.bar(
         outcome_counts_filtered,
         x='outcome_type',
         y='Count',
-        title='Crimes per Outcome Type',
         labels={'outcome_type': 'Outcome Type', 'Count': 'Number of Crimes'},
         template='plotly_dark'
-    ).update_layout(xaxis_tickangle=-45)
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    return fig
 
 def generate_crime_type_bar_chart(filtered_data):
     if 'crime_type' not in filtered_data.columns:
         logging.warning("'crime_type' column not found for crime type bar chart.")
-        return {}
+        return go.Figure()
+
     if filtered_data.empty:
         logging.warning("Filtered data is empty, cannot generate crime type bar chart.")
         return go.Figure()
+
     crime_type_counts_filtered = data_processing.get_crime_type_counts(filtered_data)
     logging.info(f"Generating Crime Type Bar Chart with data:\n{crime_type_counts_filtered.head()}")
-    return px.bar(
+    fig = px.bar(
         crime_type_counts_filtered,
         x='crime_type',
         y='Count',
         title='Most Common Crime Types',
         labels={'crime_type': 'Crime Type', 'Count': 'Number of Crimes'},
         template='plotly_dark'
-    ).update_layout(xaxis_tickangle=-45)
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    return fig
 
 def generate_yearly_comparison_chart(filtered_data):
     if 'month' not in filtered_data.columns or 'crime_type' not in filtered_data.columns:
         logging.warning("'month' or 'crime_type' column not found for yearly comparison chart.")
-        return {}
+        return go.Figure()
+
     if filtered_data.empty:
         logging.warning("Filtered data is empty, cannot generate yearly comparison chart.")
         return go.Figure()
+
     yearly_comparison_data = data_processing.get_yearly_comparison(filtered_data)
     logging.info(f"Generating Yearly Comparison Chart with data:\n{yearly_comparison_data.head()}")
-    return px.bar(
+    fig = px.bar(
         yearly_comparison_data,
         x='Year',
         y='Count',
-        color='crime_type',  # Correct column name
+        color='crime_type',
         barmode='group',
         title='Yearly Comparison of Crime Types',
         labels={'Count': 'Number of Crimes', 'Year': 'Year'},
         template='plotly_dark'
     )
+    return fig
 
 @app.callback(
     [
@@ -486,15 +520,14 @@ def generate_yearly_comparison_chart(filtered_data):
     ]
 )
 def update_dashboard(selected_outcomes, selected_crimes, relayout_data):
-    # Filter data based on selected outcomes and crimes
+    # Filter data
     filtered_data = crime_data[
         (crime_data['outcome_type'].isin(selected_outcomes)) &
         (crime_data['crime_type'].isin(selected_crimes))
     ]
-
     logging.info(f"Filtered data contains {len(filtered_data)} records.")
 
-    # Cap the number of points loaded for the map
+    # Cap the number of points for the map
     if len(filtered_data) > MAX_POINTS:
         map_data = filtered_data.sample(MAX_POINTS)
         logging.info(f"Sampling {MAX_POINTS} points from filtered data for the map.")
@@ -521,7 +554,6 @@ def update_dashboard(selected_outcomes, selected_crimes, relayout_data):
 # -------------------------------
 # Summary Statistics Callback
 # -------------------------------
-
 @app.callback(
     Output('summary-statistics', 'children'),
     [
@@ -530,12 +562,10 @@ def update_dashboard(selected_outcomes, selected_crimes, relayout_data):
     ]
 )
 def update_summary_statistics(selected_outcomes, selected_crimes):
-    # Filter data based on selected outcomes and crimes
     filtered_data = crime_data[
         (crime_data['outcome_type'].isin(selected_outcomes)) &
         (crime_data['crime_type'].isin(selected_crimes))
     ]
-
     logging.info(f"Summary Statistics - Filtered data contains {len(filtered_data)} records.")
 
     if filtered_data.empty:
@@ -549,24 +579,19 @@ def update_summary_statistics(selected_outcomes, selected_crimes):
             ])
         ]
 
-    # Calculate summary statistics
     total_crimes = len(filtered_data)
-
-    # Most common crime type
     crime_type_counts = data_processing.get_crime_type_counts(filtered_data)
     if not crime_type_counts.empty:
         most_common_crime_type = crime_type_counts.iloc[0]['crime_type']
     else:
         most_common_crime_type = "N/A"
 
-    # Most common outcome type
     outcome_counts = data_processing.get_outcome_counts(filtered_data)
     if not outcome_counts.empty:
         most_common_outcome_type = outcome_counts.iloc[0]['outcome_type']
     else:
         most_common_outcome_type = "N/A"
 
-    # Data coverage period
     min_month = filtered_data['month'].min().strftime('%B %Y') if 'month' in filtered_data.columns else "N/A"
     max_month = filtered_data['month'].max().strftime('%B %Y') if 'month' in filtered_data.columns else "N/A"
 
@@ -580,7 +605,9 @@ def update_summary_statistics(selected_outcomes, selected_crimes):
         ])
     ]
 
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))  # Cloud Run provides PORT
+    # If deploying to Cloud Run, uncomment below and comment out the local line.
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+    # For local testing:
+    #app.run(host="127.0.0.1", port=8050, debug=True
