@@ -1,133 +1,271 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
-/* Global Dark Theme */
+/* ------------------------------
+   Global Base Styles
+------------------------------ */
 body {
     background-color: #121212;
     color: #e0e0e0;
-    font-family: 'Poppins',sans-serif;
+    font-family: 'Poppins', sans-serif;
     transition: background-color 0.5s ease, color 0.5s ease;
     margin: 0;
     padding: 0;
 }
 
-/* Header Styling */
-.header {
-    text-align: center;
-    padding: 20px 0;
-    animation: fadeInDown 1s ease-out;
+/* ------------------------------
+   Theme Classes
+------------------------------ */
+.dark-theme {
+    background-color: #121212;
+    color: #e0e0e0;
 }
 
-.header h1 {
-    color: #1E90FF; /* Blue accent */
-    font-size: 3em;
-    margin-bottom: 10px;
+.dark-theme label {         /* <-- NEW: Ensures label text is blue in dark mode */
+    color: #42a5f5; 
 }
 
-.header p {
-    font-size: 1.2em;
-    color: #b3b3b3;
+.light-theme {
+    background-color: #ffffff;
+    color: #000000;
 }
 
-/* Filters Styling */
-.filters {
+.light-theme label {
+    color: #000000;         /* By default, black text in light mode */
+}
+
+/* ------------------------------
+   Navbar & Tabs (Navigation)
+------------------------------ */
+
+.dash-graph {
+    background: transparent !important;
+}
+
+/* Ensure each navbar link grows equally and centers its text */
+/* Navbar container */
+/* Navbar container */
+.navbar {
+    background-color: #1f1f1f;
+    padding: 10px;
     display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    padding: 20px;
-    animation: fadeInUp 1s ease-out;
+    align-items: center;
+    justify-content: space-between;  /* Separates nav-links and toggles */
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
-.dropdown-container {
-    flex: 1 1 45%; /* Occupy 45% of the width on larger screens */
+/* Left container for navigation links */
+.nav-links {
+    display: flex;
+    flex: 1;                       /* Takes available space */
+    justify-content: space-evenly; /* Evenly spaces links within the container */
+    align-items: center;
+}
+
+/* Style for individual navigation links */
+.nav-links .nav-link {
+    color: #b3b3b3;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: 600;
+    transition: color 0.3s ease;
+    text-align: center;
+    padding: 10px;                 /* Optional: improves clickable area */
+}
+
+/* Right container for toggles */
+.nav-toggles {
+    display: flex;
+    align-items: center;
+    /* Add margin to separate toggles from the right edge if needed */
+    margin-right: 10px;
+}
+
+
+
+/* Light Theme Overrides for Navbar */
+.light-theme .navbar {
+    background-color: #f8f9fa !important;
+}
+
+.light-theme .navbar a {
+    color: #000000 !important;
+}
+
+.light-theme .navbar a:hover {
+    color: #1E90FF !important;
+}
+
+/* ------------------------------
+   Filters Container
+------------------------------ */
+.filters-container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 20px;
+    padding: 10px 0;
+    flex-wrap: wrap;
+}
+
+.filter-item {
+    flex: 1 1 30%;
     min-width: 250px;
-    margin: 10px 2.5%;
 }
 
-/* Dropdown Styling */
-.dropdown {
-    background-color: #282828;
-    color: #ffffff;
-    border: 2px solid #1E90FF;
-    border-radius: 8px;
-    padding: 8px;
-    transition: border 0.3s, box-shadow 0.3s;
-    font-size: 1em;
-    width: 100%;
-}
-
-.dropdown .Select-control {
-    background-color: #282828 !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-.dropdown .Select-placeholder {
-    color: #a0a0a0 !important;
-}
-
-.dropdown .Select-input {
-    color: #ffffff !important;
-}
-
-.dropdown .Select-menu-outer {
+/* ------------------------------
+   Dropdown Selectors (Dark Theme)
+------------------------------ */
+.Select-control {
     background-color: #282828 !important;
     border: 2px solid #1E90FF !important;
-    max-height: 200px !important;
-    overflow-y: auto !important;
+    border-radius: 8px !important;
+    color: #1E90FF !important;
 }
 
-.dropdown .Select-option {
+.Select-placeholder {
+    color: #b3b3b3 !important;
+}
+
+.Select-menu-outer {
+    background-color: #282828 !important;
+    border: 2px solid #1E90FF !important;
+}
+
+.Select-option {
     color: #ffffff !important;
+    background-color: #282828 !important;
 }
 
-.dropdown .Select-option--is-focused {
+.Select-option:hover {
     background-color: #1E90FF !important;
     color: #121212 !important;
 }
 
-.dropdown:hover {
-    border: 2px solid #1E90FF;
-    box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+/* ------------------------------
+   Dropdown Overrides for Light Theme
+------------------------------ */
+.light-theme .Select-control {
+    background-color: #ffffff !important;
+    border: 2px solid #1E90FF !important;
+    color: #000000 !important;
 }
 
-/* Button Styling */
-.select-all-btn, .deselect-all-btn {
-    background-color: #1E90FF;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    padding: 8px 12px;
-    margin-top: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-right: 5px;
+.light-theme .Select-placeholder {
+    color: #555555 !important;
 }
 
-.select-all-btn:hover, .deselect-all-btn:hover {
-    background-color: #0d47a1;
+.light-theme .Select-menu-outer {
+    background-color: #ffffff !important;
+    border: 2px solid #1E90FF !important;
 }
 
-/* Graphs Styling */
+.light-theme .Select-option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+.light-theme .Select-option:hover {
+    background-color: #1E90FF !important;
+    color: #ffffff !important;
+}
+
+/* ------------------------------
+   DatePicker & Input Styling (Dark Theme by default)
+------------------------------ */
+.DateInput_input {
+    background-color: #282828 !important;
+    color: #ffffff !important;
+    font-size: 0.85em;
+    border: 2px solid #1E90FF !important;
+    border-radius: 8px;
+    padding: 8px 10px;
+    transition: border 0.3s ease;
+}
+
+.date-picker-range {
+    width: auto !important;
+    padding: 8px !important;
+    border: 2px solid #1E90FF !important;
+    border-radius: 8px 10px !important;
+    background-color: #282828 !important;
+    color: #000000 !important;
+    font-size: 1em !important;
+    transition: border 0.3s ease;
+    display: inline-block;
+}
+
+.date-picker-range:hover {
+    border-color: #0d47a1 !important;
+}
+
+.date-picker-range:focus {
+    outline: none !important;
+    border-color: #0d47a1 !important;
+}
+
+.DatePickerRange_input {
+    background-color: #282828 !important;
+    border: 2px solid #e5e5e5 !important;
+    border-radius: 8px !important;
+    color: #000000 !important;
+    font-size: 1em !important;
+    padding: 8px !important;
+    width: auto !important;
+}
+
+/* ------------------------------
+   DatePicker Light Theme Overrides
+------------------------------ */
+.light-theme .DateInput_input,
+.light-theme .date-picker-range,
+.light-theme .DatePickerRange_input {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #1E90FF !important;
+}
+
+/* ------------------------------
+   Graphs & Containers
+------------------------------ */
 .graph-container {
     padding: 20px;
     animation: fadeIn 1s ease-out;
 }
 
 .graph-container h2 {
-    color: #e0e0e0;
+    color: #1E90FF;
     text-align: center;
     margin-bottom: 15px;
 }
 
-/* Summary Statistics Styling */
+/* ------------------------------
+   Summary Section
+------------------------------ */
 .summary {
     padding: 20px;
-    background-color: #1f1f1f;
+    background-color: #1f1f1f; 
     border-radius: 10px;
     margin: 20px auto;
     width: 95%;
     max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
     animation: fadeIn 1s ease-out;
+}
+
+/* Dark vs Light for Summary */
+.dark-theme .summary {
+    background-color: #1f1f1f; 
+    color: #e0e0e0;
+}
+
+.light-theme .summary {
+    background-color: #f8f9fa;
+    color: #000000;
 }
 
 .summary h2 {
@@ -146,159 +284,122 @@ body {
     font-size: 1.1em;
 }
 
-/* Animations */
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* Navigation Bar Styling */
-.navbar {
+/* ------------------------------
+   Data Table & Crime Details
+------------------------------ */
+.data-table-container {
+    margin: 20px 0;
+    padding: 10px;
     background-color: #1f1f1f;
-    padding: 10px 0;
-    display: flex;
-    justify-content: center;
-    gap: 50px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    animation: fadeInDown 1s ease-out;
+    border-radius: 8px;
+    animation: fadeIn 1s ease-out;
 }
 
-.navbar a {
-    color: #e0e0e0;
-    text-decoration: none;
-    font-size: 1.2em;
-    font-weight: 600;
-    transition: color 0.3s ease;
+.crime-details {
+    background-color: #1f1f1f;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+    animation: fadeIn 1s ease-out;
 }
 
-.navbar a:hover {
+.crime-details h3 {
     color: #1E90FF;
+    margin-bottom: 10px;
 }
 
-/* Smooth Scrolling */
+.crime-details p {
+    font-size: 1em;
+    margin: 5px 0;
+}
+
+/* ------------------------------
+   Feedback Page Styling
+------------------------------ */
+.feedback-page {
+    padding: 20px;
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+.feedback-page h1 {
+    color: #1E90FF;
+    text-align: center;
+}
+
+.feedback-page p {
+    font-size: 1.2em;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.feedback-page textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #1E90FF;
+    border-radius: 8px;
+    background-color: #282828;
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1em;
+    resize: vertical;
+}
+
+.feedback-page button {
+    background-color: #1E90FF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin: 0 auto;
+}
+
+.feedback-page button:hover {
+    background-color: #0d47a1;
+}
+
+/* ------------------------------
+   Smooth Scrolling
+------------------------------ */
 html {
     scroll-behavior: smooth;
 }
 
-/* Media Queries for Mobile Responsiveness */
+/* ------------------------------
+   Media Queries (Mobile)
+------------------------------ */
 @media (max-width: 768px) {
-
-    /* Header text resizing */
-    .header h1 {
-        font-size: 2em;
-    }
-
-    .header p {
-        font-size: 1.2em;
-        color: #b3b3b3;
-        text-align: center;    /* Center the text */
-        margin: 0 auto;        /* Center the block */
-        max-width: 800px;      /* Optional: Limit the width for better readability */
-        line-height: 1.6;      /* Optional: Improves readability */
-    }
-    
-
-    /* Filter adjustments */
-    .filters {
-        flex-direction: row; /* Keeping row layout */
-        justify-content: space-between;
+    .filters-container {
+        flex-direction: row;
+        justify-content: center;
         padding: 10px 5%;
     }
-
-    .dropdown-container {
-        flex: 1 1 45%;
+    .filter-item {
+        flex: 1 1 30%;
         margin: 10px 2.5%;
     }
-
-    /* Dropdown Font Size */
-    .dropdown {
-        font-size: 0.9em;
-    }
-
-    /* Summary adjustments */
-    .summary {
-        width: 95%;
-        margin: 10px auto;
-    }
-
-    .summary li {
-        font-size: 1em;
-    }
-
-    /* Navigation adjustments */
     .navbar {
-        flex-direction: 20px 10px;
+        flex-direction: column;
         gap: 20px;
         padding: 10px;
     }
-
     .navbar a {
         font-size: 1.2em;
         padding: 10px 0;
         width: 100%;
         text-align: center;
     }
-
-    /* Graph adjustments */
     .graph-container {
         padding: 10px;
     }
-
     .graph-container h2 {
         font-size: 1.5em;
     }
-
-    /* Ensure all graphs take full width in a mobile layout */
     .graph-container .dcc-graph {
         width: 100%;
         height: auto;
-    }
-
-    /* FORCE full-width on mobile for specific containers that have 'full-width-mobile' */
-    .graph-container.full-width-mobile {
-        width: 100% !important;       /* Override any width */
-        display: block !important;    /* Stack vertically on mobile */
-        padding: 10px 0 !important;   /* Adjust padding for better spacing */
-    }
-
-    /* Center headings in these specific containers */
-    .graph-container.full-width-mobile h2 {
-        font-size: 1.4em;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    /* Ensure graphs themselves are responsive */
-    .graph-container.full-width-mobile .dcc-graph {
-        width: 100% !important;
-        height: auto !important;
     }
 }
