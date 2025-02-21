@@ -17,7 +17,7 @@ CHUNK_SIZE = 10000
 def load_data():
     """
     Load crime data from the PostgreSQL database using chunking and optional sampling.
-    Selecting only columns from 'crime_records_enriched' and sorting by 'month'.
+    Now it selects all columns from 'crime_records_enriched' and adds a 'year' column.
     """
     try:
         DB_USER = os.getenv('DB_USER')
@@ -33,47 +33,38 @@ def load_data():
 
         engine = create_engine(DATABASE_URL)
 
-        # Select only relevant columns from crime_records_enriched, including year
-        query = """
-            SELECT
-                month,
-                reported_by,
-                falls_within,
-                longitude,
-                latitude,
-                location,
-                lsoa_code,
-                lsoa_name,
-                crime_type,
-                outcome_type,
-                EXTRACT(YEAR FROM month)::integer AS year
-            FROM crime_records_enriched
-            LIMIT 100000
-           
-        """
+        # Select all columns from crime_records_enriched
+        query = "SELECT * FROM crime_records_enriched LIMIT 100000"
 
         if SAMPLE_DATA:
             logging.info("Loading data in chunks with sampling...")
-            chunks = pd.read_sql(query, engine, parse_dates=['month'], chunksize=CHUNK_SIZE)
+            chunks = pd.read_sql(query, engine, chunksize=CHUNK_SIZE)
             data_list = []
             for i, chunk in enumerate(chunks, start=1):
                 logging.info(f"Processing chunk {i} with {len(chunk)} rows...")
-                # Sample 100% of each chunk (change 'frac' to load a smaller sample)
+                # Sample 100% of each chunk (change 'frac' to load a smaller sample if needed)
                 sampled_chunk = chunk.sample(frac=1.0)
                 data_list.append(sampled_chunk)
             data = pd.concat(data_list, ignore_index=True)
         else:
             logging.info("Loading full dataset without sampling...")
-            data = pd.read_sql(query, engine, parse_dates=['month'])
+            data = pd.read_sql(query, engine)
 
-        data = data.sort_values("month")
+        # Sort data by 'month' (if it exists)
+        if 'month' in data.columns:
+            data['month'] = pd.to_datetime(data['month'], errors='coerce')
+            # Create a 'year' column by extracting year from the 'month' column.
+            data['year'] = data['month'].dt.year
 
-        # Convert columns to appropriate dtypes
-        data['longitude'] = pd.to_numeric(data['longitude'], downcast='float', errors='coerce')
-        data['latitude'] = pd.to_numeric(data['latitude'], downcast='float', errors='coerce')
-        data['crime_type'] = data['crime_type'].astype('category')
-        data['outcome_type'] = data['outcome_type'].astype('category')
-        data['year'] = data['year'].astype(int)
+        # Convert columns to appropriate dtypes if needed.
+        if 'longitude' in data.columns:
+            data['longitude'] = pd.to_numeric(data['longitude'], downcast='float', errors='coerce')
+        if 'latitude' in data.columns:
+            data['latitude'] = pd.to_numeric(data['latitude'], downcast='float', errors='coerce')
+        if 'crime_type' in data.columns:
+            data['crime_type'] = data['crime_type'].astype('category')
+        if 'outcome_type' in data.columns:
+            data['outcome_type'] = data['outcome_type'].astype('category')
 
         logging.info("Data loaded successfully from crime_records_enriched.")
         logging.info(f"Data types:\n{data.dtypes}")
@@ -88,7 +79,6 @@ def load_data():
 def load_lsoa_lookup():
     """
     Load the LSOA lookup table that maps lsoa_id, lsoa_code, lsoa_name, etc.
-    If no longer needed, you can remove or comment this out.
     """
     try:
         DB_USER = os.getenv('DB_USER')
