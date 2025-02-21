@@ -17,8 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-# If you have a Mapbox token, you can still load it; 
-# but for "open-street-map" style it is not strictly needed.
+# If you have a Mapbox token, you can load it; otherwise open-street-map style will be used.
 mapbox_token = os.getenv('MAPBOX_TOKEN')
 if mapbox_token:
     px.set_mapbox_access_token(mapbox_token)
@@ -34,7 +33,8 @@ logging.info(f"Loaded GeoJSON with {len(lsoa_geojson.get('features', []))} featu
 DEBUG = True
 
 def layout():
-    available_years = sorted(crime_data["month"].dt.year.unique())
+    # Instead of month.dt.year, we can use the 'year' column from crime_records_enriched
+    available_years = sorted(crime_data["year"].unique())
     year_options = [{"label": str(y), "value": str(y)} for y in available_years]
 
     crime_type_options = [
@@ -73,7 +73,7 @@ def layout():
                     dcc.Loading(
                         dcc.Graph(
                             id="lsoa-choropleth-map",
-                            style={"width": "100%", "height": "800px"},  # Adjust as needed
+                            style={"width": "100%", "height": "800px"},
                             config={"displayModeBar": False, "scrollZoom": True}
                         ),
                         type="circle"
@@ -111,36 +111,37 @@ def register_callbacks(app):
     )
     def update_map_and_bar(selected_year, selected_crime_type, is_light_mode):
         logging.info(
-            f"Callback triggered with year: {selected_year}, "
-            f"crime type: {selected_crime_type}, is_light_mode: {is_light_mode}"
+            f"Callback triggered with year={selected_year}, crime_type={selected_crime_type}, is_light_mode={is_light_mode}"
         )
 
         if not selected_year or not selected_crime_type:
             logging.info("⚠️ Missing selection(s); returning empty figures.")
             return go.Figure(), go.Figure()
 
-        # 1. Filter the crime_data
+        # 1. Filter the crime_data by year & crime type
         df_filtered = crime_data[
-            (crime_data["crime_type"] == selected_crime_type)
-            & (crime_data["month"].dt.year == int(selected_year))
+            (crime_data["year"] == int(selected_year))
+            & (crime_data["crime_type"] == selected_crime_type)
         ]
         logging.info(f"Filtered crime data: {len(df_filtered)} rows.")
+
         if df_filtered.empty:
             logging.warning("No crime data found for the given selection.")
             return go.Figure(), go.Figure()
 
-        # 2. Aggregate by LSOA
-        grouped = df_filtered.groupby("lsoa_id").size().reset_index(name="crime_count")
+        # 2. Aggregate by lsoa_code (NOT lsoa_id)
+        grouped = df_filtered.groupby("lsoa_code").size().reset_index(name="crime_count")
         if DEBUG:
             logging.debug(f"Grouped data sample:\n{grouped.head()}")
 
-        # 3. Merge with lsoa_lookup
-        merged = pd.merge(grouped, lsoa_lookup, on="lsoa_id", how="left")
+        # 3. Merge with lsoa_lookup on lsoa_code, to get lsoa_name if needed
+        #    (If 'lsoa_name' is already in df_filtered, you can skip this.)
+        merged = pd.merge(grouped, lsoa_lookup, on="lsoa_code", how="left")
         if DEBUG:
             logging.debug(f"Merged data sample:\n{merged.head()}")
-            logging.debug(f"Merged DataFrame columns: {merged.columns.tolist()}")
+            logging.debug(f"Merged columns: {merged.columns.tolist()}")
 
-        # 4. Filter GeoJSON
+        # 4. Filter the LSOA GeoJSON for only the lsoa_codes present
         lsoa_codes = merged["lsoa_code"].dropna().unique().tolist()
         filtered_geojson = {
             "type": "FeatureCollection",
@@ -150,14 +151,10 @@ def register_callbacks(app):
             ]
         }
         logging.info(f"Filtered GeoJSON has {len(filtered_geojson.get('features', []))} features.")
-        if filtered_geojson["features"]:
-            logging.debug(f"Sample filtered GeoJSON feature: {json.dumps(filtered_geojson['features'][0], indent=2)}")
-        else:
-            logging.warning("Filtered GeoJSON is empty.")
+        if not filtered_geojson["features"]:
+            logging.warning("Filtered GeoJSON is empty. No matching LSOA codes found.")
 
-        # 5. Build the choropleth with a street-level map:
-        #    - "open-street-map" requires no token, but offers tile-based street-level info.
-        #    - Increase the zoom level or set center to your area of interest.
+        # 5. Create the choropleth map
         try:
             fig_map = px.choropleth_mapbox(
                 merged,
@@ -165,10 +162,10 @@ def register_callbacks(app):
                 locations="lsoa_code",
                 color="crime_count",
                 featureidkey="properties.LSOA21CD",
-                hover_name="lsoa_name",
-                mapbox_style="open-street-map",  # Street-level tile layer
-                zoom=10,                         # Adjust zoom for street-level detail
-                center={"lat": 51.5074, "lon": -0.1278},  # Example center (London)
+                hover_name="lsoa_name",  # from lsoa_lookup
+                mapbox_style="open-street-map",
+                zoom=10,
+                center={"lat": 51.5074, "lon": -0.1278},  # Example: center on London
                 opacity=0.6,
                 color_continuous_scale="YlOrRd"
             )
@@ -178,12 +175,12 @@ def register_callbacks(app):
                 margin={"l":0, "r":0, "t":0, "b":0},
                 coloraxis_showscale=False
             )
-            logging.info("Choropleth map (street-level) created successfully.")
+            logging.info("Choropleth map created successfully.")
         except Exception as e:
-            logging.error(f"Error creating street-level choropleth map: {e}")
+            logging.error(f"Error creating choropleth map: {e}")
             fig_map = go.Figure()
 
-        # 6. Create top-10 LSOA bar chart
+        # 6. Create the top-10 LSOA bar chart
         try:
             top10 = merged.nlargest(10, "crime_count")
             font_color = "#000000" if is_light_mode else "#FFFFFF"

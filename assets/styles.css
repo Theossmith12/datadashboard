@@ -20,50 +20,51 @@ body {
     color: #e0e0e0;
 }
 
-.dark-theme label {         /* <-- NEW: Ensures label text is blue in dark mode */
-    color: #42a5f5; 
-}
-
 .light-theme {
     background-color: #ffffff;
     color: #000000;
 }
 
+/* Updated label styles for dark and light themes */
+.dark-theme label {
+    color: white;
+}
 .light-theme label {
-    color: #000000;         /* By default, black text in light mode */
+    color: black;
+}
+
+/* Dark mode: selected dropdown text color */
+.dark-theme .Select-value-label {
+    color: white !important;
+}
+/* Light mode: selected dropdown text color */
+.light-theme .Select-value-label {
+    color: black !important;
 }
 
 /* ------------------------------
    Navbar & Tabs (Navigation)
 ------------------------------ */
-
 .dash-graph {
     background: transparent !important;
 }
 
-/* Ensure each navbar link grows equally and centers its text */
-/* Navbar container */
-/* Navbar container */
 .navbar {
     background-color: #1f1f1f;
     padding: 10px;
     display: flex;
     align-items: center;
-    justify-content: space-between;  /* Separates nav-links and toggles */
+    justify-content: space-between; /* Separates nav-links and toggles */
     position: sticky;
     top: 0;
     z-index: 1000;
 }
-
-/* Left container for navigation links */
 .nav-links {
     display: flex;
-    flex: 1;                       /* Takes available space */
-    justify-content: space-evenly; /* Evenly spaces links within the container */
+    flex: 1;
+    justify-content: space-evenly;
     align-items: center;
 }
-
-/* Style for individual navigation links */
 .nav-links .nav-link {
     color: #b3b3b3;
     text-decoration: none;
@@ -71,28 +72,20 @@ body {
     font-weight: 600;
     transition: color 0.3s ease;
     text-align: center;
-    padding: 10px;                 /* Optional: improves clickable area */
+    padding: 10px;
 }
-
-/* Right container for toggles */
 .nav-toggles {
     display: flex;
     align-items: center;
-    /* Add margin to separate toggles from the right edge if needed */
     margin-right: 10px;
 }
-
-
-
 /* Light Theme Overrides for Navbar */
 .light-theme .navbar {
     background-color: #f8f9fa !important;
 }
-
 .light-theme .navbar a {
     color: #000000 !important;
 }
-
 .light-theme .navbar a:hover {
     color: #1E90FF !important;
 }
@@ -108,10 +101,47 @@ body {
     padding: 10px 0;
     flex-wrap: wrap;
 }
-
 .filter-item {
     flex: 1 1 30%;
     min-width: 250px;
+}
+
+/* ------------------------------
+   Collapsible Filters (details/summary)
+------------------------------ */
+.filter-collapse {
+    margin: 10px 0;
+    border: 1px solid #1E90FF;
+    border-radius: 8px;
+    padding: 5px 10px;
+    background-color: #282828; /* default for dark mode if no theme class present */
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+.filter-collapse summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1em;
+    outline: none; /* remove default focus outline on summary */
+    margin: 5px 0;
+}
+.filter-collapse[open] {
+    margin-bottom: 10px;
+}
+.filter-collapse[open] summary {
+    margin-bottom: 10px;
+}
+/* Dark theme collapsible overrides */
+.dark-theme .filter-collapse {
+    background-color: #2b2b2b;
+    color: #ffffff;
+    border: 1px solid #1E90FF;
+}
+/* Light theme collapsible overrides */
+.light-theme .filter-collapse {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #1E90FF;
 }
 
 /* ------------------------------
@@ -123,21 +153,17 @@ body {
     border-radius: 8px !important;
     color: #1E90FF !important;
 }
-
 .Select-placeholder {
     color: #b3b3b3 !important;
 }
-
 .Select-menu-outer {
     background-color: #282828 !important;
     border: 2px solid #1E90FF !important;
 }
-
 .Select-option {
     color: #ffffff !important;
     background-color: #282828 !important;
 }
-
 .Select-option:hover {
     background-color: #1E90FF !important;
     color: #121212 !important;
@@ -151,79 +177,154 @@ body {
     border: 2px solid #1E90FF !important;
     color: #000000 !important;
 }
-
 .light-theme .Select-placeholder {
     color: #555555 !important;
 }
-
 .light-theme .Select-menu-outer {
     background-color: #ffffff !important;
     border: 2px solid #1E90FF !important;
 }
-
 .light-theme .Select-option {
     color: #000000 !important;
     background-color: #ffffff !important;
 }
-
 .light-theme .Select-option:hover {
     background-color: #1E90FF !important;
     color: #ffffff !important;
 }
 
 /* ------------------------------
-   DatePicker & Input Styling (Dark Theme by default)
+   DatePicker & Input Styling
 ------------------------------ */
-.DateInput_input {
-    background-color: #282828 !important;
-    color: #ffffff !important;
-    font-size: 0.85em;
-    border: 2px solid #1E90FF !important;
-    border-radius: 8px;
-    padding: 8px 10px;
-    transition: border 0.3s ease;
-}
 
+/* Container for the selected date range (start + end date) */
 .date-picker-range {
     width: auto !important;
-    padding: 8px !important;
-    border: 2px solid #1E90FF !important;
-    border-radius: 8px 10px !important;
-    background-color: #282828 !important;
-    color: #000000 !important;
+    margin: 10px 0; /* extra spacing above/below */
+    padding: 10px 14px !important;
+    border: 2px solid #1E90FF !important; /* Blue border */
+    border-radius: 8px !important;        /* Slightly rounded corners */
+    background-color: #282828 !important; /* Dark background by default */
+    color: #ffffff !important;            /* White text by default */
     font-size: 1em !important;
-    transition: border 0.3s ease;
+    transition: all 0.3s ease;
     display: inline-block;
+    box-shadow: 0 0 5px rgba(30, 144, 255, 0.4); /* Soft glow around the picker */
 }
-
+/* Hover effect for the date picker container */
 .date-picker-range:hover {
-    border-color: #0d47a1 !important;
+    border-color: #00ced1 !important;
+    box-shadow: 0 0 8px rgba(0, 206, 209, 0.6);
 }
-
-.date-picker-range:focus {
-    outline: none !important;
-    border-color: #0d47a1 !important;
+/* Dark theme overrides */
+.dark-theme .date-picker-range {
+    background-color: #2b2b2b !important;
+    color: #ffffff !important;
+    border-color: #1E90FF !important;
 }
-
-.DatePickerRange_input {
-    background-color: #282828 !important;
-    border: 2px solid #e5e5e5 !important;
-    border-radius: 8px !important;
-    color: #000000 !important;
-    font-size: 1em !important;
-    padding: 8px !important;
-    width: auto !important;
-}
-
-/* ------------------------------
-   DatePicker Light Theme Overrides
------------------------------- */
-.light-theme .DateInput_input,
-.light-theme .date-picker-range,
-.light-theme .DatePickerRange_input {
+/* Light theme overrides */
+.light-theme .date-picker-range {
     background-color: #ffffff !important;
     color: #000000 !important;
     border-color: #1E90FF !important;
+    box-shadow: 0 0 5px rgba(30, 144, 255, 0.2);
+}
+
+/* The container around each date input (start/end) */
+.DatePickerRange_input {
+    background-color: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    font-size: inherit !important;
+    width: auto !important;
+}
+/* The actual text field for each date */
+.DateInput_input {
+    background-color: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    font-size: 0.95em !important;
+    padding: 0 !important;
+}
+/* Remove the default focus outline */
+.DatePickerRange_input:focus,
+.DateInput_input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Dark mode: black background for DateInput container */
+.dark-theme .DateInput,
+.dark-theme .DateInput_1 {
+    background-color: #2b2b2b !important;
+    color: #ffffff !important;
+}
+/* Light mode: white background for DateInput container */
+.light-theme .DateInput,
+.light-theme .DateInput_1 {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* For dark mode: force dark background on the date picker inputs */
+.dark-theme .DateInput_input input,
+.dark-theme .DatePickerRange_input input {
+    background-color: #2b2b2b !important;
+    color: white !important;
+    border: none !important;
+}
+/* For light mode: ensure a light background on the date picker inputs */
+.light-theme .DateInput_input input,
+.light-theme .DatePickerRange_input input {
+    background-color: #ffffff !important;
+    color: black !important;
+    border: none !important;
+}
+
+/* Dark mode: black background for the entire DateRangePickerInput container */
+.dark-theme .DateRangePickerInput {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+}
+/* Light mode: white background for the entire DateRangePickerInput container */
+.light-theme .DateRangePickerInput {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* -------------------------------------
+   Calendar Day & Popover Styling
+-------------------------------------- */
+.DateRangePicker_picker {
+    background-color: #2b2b2b !important; /* Dark background for calendar popover */
+    color: #ffffff !important;
+    border: 1px solid #1E90FF !important;
+}
+/* Light theme popover override */
+.light-theme .DateRangePicker_picker {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #1E90FF !important;
+}
+/* Style individual days in the calendar */
+.CalendarDay__default {
+    border: 1px solid #444444 !important;
+    background: #333333 !important;
+    color: #ffffff !important;
+}
+.light-theme .CalendarDay__default {
+    border: 1px solid #cccccc !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+/* Hover effect on days */
+.CalendarDay__default:hover {
+    background: #444444 !important;
+    color: #ffffff !important;
+}
+.light-theme .CalendarDay__default:hover {
+    background: #ededed !important;
+    color: #000000 !important;
 }
 
 /* ------------------------------
@@ -233,7 +334,6 @@ body {
     padding: 20px;
     animation: fadeIn 1s ease-out;
 }
-
 .graph-container h2 {
     color: #1E90FF;
     text-align: center;
@@ -245,7 +345,7 @@ body {
 ------------------------------ */
 .summary {
     padding: 20px;
-    background-color: #1f1f1f; 
+    background-color: #1f1f1f;
     border-radius: 10px;
     margin: 20px auto;
     width: 95%;
@@ -256,29 +356,24 @@ body {
     text-align: center;
     animation: fadeIn 1s ease-out;
 }
-
 /* Dark vs Light for Summary */
 .dark-theme .summary {
-    background-color: #1f1f1f; 
+    background-color: #1f1f1f;
     color: #e0e0e0;
 }
-
 .light-theme .summary {
     background-color: #f8f9fa;
     color: #000000;
 }
-
 .summary h2 {
     color: #1E90FF;
     text-align: center;
     margin-bottom: 15px;
 }
-
 .summary ul {
     list-style-type: none;
     padding: 0;
 }
-
 .summary li {
     padding: 5px 0;
     font-size: 1.1em;
@@ -294,7 +389,6 @@ body {
     border-radius: 8px;
     animation: fadeIn 1s ease-out;
 }
-
 .crime-details {
     background-color: #1f1f1f;
     border-radius: 8px;
@@ -302,12 +396,10 @@ body {
     margin: 20px 0;
     animation: fadeIn 1s ease-out;
 }
-
 .crime-details h3 {
     color: #1E90FF;
     margin-bottom: 10px;
 }
-
 .crime-details p {
     font-size: 1em;
     margin: 5px 0;
@@ -321,18 +413,15 @@ body {
     background-color: #121212;
     color: #e0e0e0;
 }
-
 .feedback-page h1 {
     color: #1E90FF;
     text-align: center;
 }
-
 .feedback-page p {
     font-size: 1.2em;
     text-align: center;
     margin-bottom: 20px;
 }
-
 .feedback-page textarea {
     width: 100%;
     padding: 10px;
@@ -344,7 +433,6 @@ body {
     font-size: 1em;
     resize: vertical;
 }
-
 .feedback-page button {
     background-color: #1E90FF;
     color: #fff;
@@ -356,7 +444,6 @@ body {
     display: block;
     margin: 0 auto;
 }
-
 .feedback-page button:hover {
     background-color: #0d47a1;
 }

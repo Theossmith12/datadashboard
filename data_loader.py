@@ -17,7 +17,7 @@ CHUNK_SIZE = 10000
 def load_data():
     """
     Load crime data from the PostgreSQL database using chunking and optional sampling.
-    Only necessary columns are selected and the data is sorted chronologically by month.
+    Selecting only columns from 'crime_records_enriched' and sorting by 'month'.
     """
     try:
         DB_USER = os.getenv('DB_USER')
@@ -28,12 +28,28 @@ def load_data():
         if CLOUD_DEPLOY:
             DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/{DB_NAME}?host=/cloudsql/{DB_CONN_NAME}"
         else:
+            # Adjust user/password/host/port as needed
             DATABASE_URL = "postgresql+psycopg2://postgres:Fluminense99@localhost:5432/crime_data"
 
         engine = create_engine(DATABASE_URL)
+
+        # Select only relevant columns from crime_records_enriched, including year
         query = """
-            SELECT month, longitude, latitude, crime_type, outcome_type, lsoa_id 
-            FROM crime_records_enriched;
+            SELECT
+                month,
+                reported_by,
+                falls_within,
+                longitude,
+                latitude,
+                location,
+                lsoa_code,
+                lsoa_name,
+                crime_type,
+                outcome_type,
+                EXTRACT(YEAR FROM month)::integer AS year
+            FROM crime_records_enriched
+            LIMIT 100000
+           
         """
 
         if SAMPLE_DATA:
@@ -41,7 +57,8 @@ def load_data():
             chunks = pd.read_sql(query, engine, parse_dates=['month'], chunksize=CHUNK_SIZE)
             data_list = []
             for i, chunk in enumerate(chunks, start=1):
-                logging.info(f"Processing chunk {i}...")
+                logging.info(f"Processing chunk {i} with {len(chunk)} rows...")
+                # Sample 100% of each chunk (change 'frac' to load a smaller sample)
                 sampled_chunk = chunk.sample(frac=1.0)
                 data_list.append(sampled_chunk)
             data = pd.concat(data_list, ignore_index=True)
@@ -50,12 +67,15 @@ def load_data():
             data = pd.read_sql(query, engine, parse_dates=['month'])
 
         data = data.sort_values("month")
-        data['longitude'] = pd.to_numeric(data['longitude'], downcast='float')
-        data['latitude'] = pd.to_numeric(data['latitude'], downcast='float')
+
+        # Convert columns to appropriate dtypes
+        data['longitude'] = pd.to_numeric(data['longitude'], downcast='float', errors='coerce')
+        data['latitude'] = pd.to_numeric(data['latitude'], downcast='float', errors='coerce')
         data['crime_type'] = data['crime_type'].astype('category')
         data['outcome_type'] = data['outcome_type'].astype('category')
+        data['year'] = data['year'].astype(int)
 
-        logging.info("Data loaded successfully.")
+        logging.info("Data loaded successfully from crime_records_enriched.")
         logging.info(f"Data types:\n{data.dtypes}")
         logging.info(f"First few rows:\n{data.head()}")
         return data
@@ -67,7 +87,8 @@ def load_data():
 @lru_cache(maxsize=1)
 def load_lsoa_lookup():
     """
-    Load the LSOA lookup table that maps lsoa_id to lsoa_code and lsoa_name.
+    Load the LSOA lookup table that maps lsoa_id, lsoa_code, lsoa_name, etc.
+    If no longer needed, you can remove or comment this out.
     """
     try:
         DB_USER = os.getenv('DB_USER')
@@ -83,7 +104,7 @@ def load_lsoa_lookup():
         engine = create_engine(DATABASE_URL)
         query = "SELECT lsoa_id, lsoa_code, lsoa_name FROM lsoa_lookup"
         df = pd.read_sql(query, engine)
-        logging.info("LSOA lookup loaded successfully.")
+        logging.info(f"LSOA lookup loaded successfully with {len(df)} rows.")
         return df
 
     except Exception as e:
