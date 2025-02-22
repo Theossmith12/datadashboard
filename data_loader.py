@@ -1,9 +1,9 @@
 import os
 import logging
 import pandas as pd
-from functools import lru_cache
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
+from cache_config import cache  # Use our external persistent cache
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -13,11 +13,11 @@ CLOUD_DEPLOY = False
 SAMPLE_DATA = True
 CHUNK_SIZE = 10000
 
-@lru_cache(maxsize=1)
+@cache.memoize(timeout=0)
 def load_data():
     """
     Load crime data from the PostgreSQL database using chunking and optional sampling.
-    Now it selects all columns from 'crime_records_enriched' and adds a 'year' column.
+    Selects all columns from 'crime_records_enriched' and adds a 'year' column.
     """
     try:
         DB_USER = os.getenv('DB_USER')
@@ -32,9 +32,7 @@ def load_data():
             DATABASE_URL = "postgresql+psycopg2://postgres:Fluminense99@localhost:5432/crime_data"
 
         engine = create_engine(DATABASE_URL)
-
-        # Select all columns from crime_records_enriched
-        query = "SELECT * FROM crime_records_enriched LIMIT 100000"
+        query = "SELECT * FROM crime_records_enriched LIMIT 1000000"
 
         if SAMPLE_DATA:
             logging.info("Loading data in chunks with sampling...")
@@ -42,7 +40,6 @@ def load_data():
             data_list = []
             for i, chunk in enumerate(chunks, start=1):
                 logging.info(f"Processing chunk {i} with {len(chunk)} rows...")
-                # Sample 100% of each chunk (change 'frac' to load a smaller sample if needed)
                 sampled_chunk = chunk.sample(frac=1.0)
                 data_list.append(sampled_chunk)
             data = pd.concat(data_list, ignore_index=True)
@@ -50,13 +47,10 @@ def load_data():
             logging.info("Loading full dataset without sampling...")
             data = pd.read_sql(query, engine)
 
-        # Sort data by 'month' (if it exists)
         if 'month' in data.columns:
             data['month'] = pd.to_datetime(data['month'], errors='coerce')
-            # Create a 'year' column by extracting year from the 'month' column.
             data['year'] = data['month'].dt.year
 
-        # Convert columns to appropriate dtypes if needed.
         if 'longitude' in data.columns:
             data['longitude'] = pd.to_numeric(data['longitude'], downcast='float', errors='coerce')
         if 'latitude' in data.columns:
@@ -75,10 +69,10 @@ def load_data():
         logging.error(f"Failed to load data: {e}")
         return pd.DataFrame()
 
-@lru_cache(maxsize=1)
+@cache.memoize(timeout=0)
 def load_lsoa_lookup():
     """
-    Load the LSOA lookup table that maps lsoa_id, lsoa_code, lsoa_name, etc.
+    Load the LSOA lookup table mapping lsoa_id, lsoa_code, lsoa_name, etc.
     """
     try:
         DB_USER = os.getenv('DB_USER')
@@ -101,6 +95,17 @@ def load_lsoa_lookup():
         logging.error(f"Failed to load lsoa_lookup: {e}")
         return pd.DataFrame()
 
-# Expose the cached data for use in other modules
-crime_data = load_data()
-lsoa_lookup = load_lsoa_lookup()
+def reset_cache():
+    """
+    Manually reset the cached data. This clears the cached results for both the crime data and LSOA lookup,
+    ensuring that subsequent calls fetch fresh data from the database.
+    """
+    cache.delete_memoized(load_data)
+    cache.delete_memoized(load_lsoa_lookup)
+    logging.info("Cache has been manually reset.")
+
+# IMPORTANT: Do NOT pre-load the data at module level.
+# Instead, import and call load_data() and load_lsoa_lookup() within your callbacks or functions,
+# APp model -> 
+
+

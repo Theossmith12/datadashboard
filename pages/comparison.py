@@ -8,13 +8,10 @@ import json
 import pandas as pd
 import os
 
-from data_loader import crime_data, lsoa_lookup
+from data_loader import load_data, load_lsoa_lookup
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# Set logging to DEBUG level so we can troubleshoot easily.
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
 # If you have a Mapbox token, load it; otherwise open-street-map style.
 mapbox_token = os.getenv('MAPBOX_TOKEN')
@@ -29,14 +26,17 @@ with open("data/lsoa_boundaries.geojson", "r") as f:
     lsoa_geojson = json.load(f)
 logging.info(f"Loaded GeoJSON with {len(lsoa_geojson.get('features', []))} features.")
 
-MAP_CENTER_LON = -0.1278  # Used as the default map center (London)
+MAP_CENTER_LON = -0.1278  # Default map center (London)
 
 def layout():
     """
-    We display a two-row layout:
-      - First row: The map (8 columns) and the demographic bar chart (4 columns).
-      - Second row: The top-10 bar chart.
+    Display a two-row layout:
+      - Row 1: The map and the demographic bar chart.
+      - Row 2: The top-10 LSOA bar chart.
     """
+    # Get cached data on demand
+    crime_data = load_data()
+    lsoa_lookup = load_lsoa_lookup()
 
     header = html.Div([
         html.H1("UK Crime Data Comparison", style={"textAlign": "center"}),
@@ -48,7 +48,7 @@ def layout():
         )
     ], className="page-header", style={"marginBottom": "30px"})
 
-    # Prepare Year & Crime Type dropdown options
+    # Prepare Year & Crime Type dropdown options using the fresh data
     available_years = sorted(crime_data["year"].dropna().unique())
     year_options = [{"label": "All Years", "value": "all"}] + [
         {"label": str(y), "value": str(y)} for y in available_years
@@ -68,7 +68,7 @@ def layout():
                     dcc.Dropdown(
                         id="lsoa-year-dropdown",
                         options=year_options,
-                        value="all",  # default: all years
+                        value="all",
                         clearable=False,
                         className="filter-item"
                     )
@@ -85,7 +85,7 @@ def layout():
                 ], width=6),
             ], className="my-2"),
 
-            # Row for the map + demographic bar chart
+            # Row for the map and demographic bar chart
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
@@ -132,7 +132,6 @@ def layout():
 
 def register_callbacks(app):
     """Register all callbacks for the Comparison page."""
-
     @app.callback(
         [
             Output("lsoa-choropleth-map", "figure"),
@@ -148,13 +147,15 @@ def register_callbacks(app):
     def update_map_and_bar(selected_year, selected_crime_type, is_light_mode):
         logging.debug("update_map_and_bar triggered:")
         logging.debug(f"  selected_year={selected_year}, selected_crime_type={selected_crime_type}, is_light_mode={is_light_mode}")
+        
+        # Get data from cache on demand
+        crime_data = load_data()
+        lsoa_lookup = load_lsoa_lookup()
 
-        # If user didn't select a crime type, return empty figs
         if not selected_crime_type:
             logging.debug("No crime type selected. Returning empty.")
             return go.Figure(), go.Figure(), None
 
-        # Filter the DataFrame based on year & crime type
         if str(selected_year).lower() == "all":
             df_filtered = crime_data[crime_data["crime_type"] == selected_crime_type]
         else:
@@ -168,7 +169,7 @@ def register_callbacks(app):
             logging.debug("No data after filtering => returning empty.")
             return go.Figure(), go.Figure(), None
 
-        # Group/aggregate by LSOA
+        # Group and aggregate by LSOA
         grouped = df_filtered.groupby("lsoa_code").agg(
             crime_count=('lsoa_code', 'size'),
             youth_male_percent=('youth_male_percent', 'mean'),
@@ -186,7 +187,7 @@ def register_callbacks(app):
         merged = pd.merge(grouped, lsoa_lookup, on="lsoa_code", how="left")
         logging.debug(f"Merged sample:\n{merged.head()}")
 
-        # Build the map figure
+        # Build the map figure using filtered GeoJSON
         lsoa_codes = merged["lsoa_code"].dropna().unique().tolist()
         filtered_geojson = {
             "type": "FeatureCollection",
@@ -223,7 +224,6 @@ def register_callbacks(app):
             logging.error(f"Error creating map => {ex}")
             fig_map = go.Figure()
 
-        # Build the top-10 bar chart
         try:
             top10 = merged.nlargest(10, "crime_count")
             font_color = "#000000" if is_light_mode else "#FFFFFF"
@@ -267,7 +267,6 @@ def register_callbacks(app):
             logging.error(f"Error creating top-10 bar => {ex}")
             fig_bar = go.Figure()
 
-        # Return the map, top-10 bar, & aggregated data as a dict
         return fig_map, fig_bar, merged.to_dict('records')
 
     @app.callback(
@@ -279,20 +278,13 @@ def register_callbacks(app):
         [State("aggregated-data", "data")]
     )
     def update_demo_bar(hoverData, is_light_mode, aggregated_data):
-        """
-        This callback updates the demographic bar chart in the second column.
-        If user hovers over a valid LSOA => show a horizontal bar chart of age/gender distribution.
-        Otherwise => show an empty figure or a small placeholder text.
-        """
         logging.debug("update_demo_bar triggered.")
         logging.debug(f"  hoverData => {hoverData}, is_light_mode => {is_light_mode}")
 
-        # If there's no hover or no data, just return an empty figure
         if not hoverData or not aggregated_data:
             logging.debug("No hoverData or aggregated_data => empty figure.")
             return go.Figure()
 
-        # Attempt to extract the lsoa_code from hoverData
         points = hoverData.get("points", [])
         if not points:
             logging.debug("hoverData has no points => empty figure.")
@@ -304,7 +296,6 @@ def register_callbacks(app):
             logging.debug("No location in hover point => empty figure.")
             return go.Figure()
 
-        # Look up the aggregated record for that LSOA
         df_agg = pd.DataFrame(aggregated_data)
         record_df = df_agg[df_agg["lsoa_code"] == lsoa_code]
         if record_df.empty:
@@ -313,10 +304,8 @@ def register_callbacks(app):
 
         record = record_df.iloc[0]
         logging.debug(f"Matched LSOA record => {record}")
-        # We'll display the lsoa_name in the chart title
         lsoa_name = record.get("lsoa_name", lsoa_code)
 
-        # Build the demographic distribution as a bar chart
         demo_dict = {
             "Youth Male": record.get("youth_male_percent", 0),
             "Youth Female": record.get("youth_female_percent", 0),

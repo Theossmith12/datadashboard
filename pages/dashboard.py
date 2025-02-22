@@ -8,19 +8,12 @@ import plotly.express as px
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
-from data_loader import crime_data  # The loaded data
-# If you have constants from data_loader, you can also import them here.
+from data_loader import load_data  # Use the caching function
 MAX_POINTS = 10000
 
-# ---------------------------
-# Dashboard Layout
-# ---------------------------
 def layout():
-    """
-    Returns the layout (UI) for the Dashboard page.
-    """
-
-    # Prepare dropdown options
+    # Get cached data on demand
+    crime_data = load_data()
     outcome_options = [{'label': i, 'value': i} for i in crime_data['outcome_type'].dropna().unique()]
     crime_type_options = [{'label': i, 'value': i} for i in crime_data['crime_type'].dropna().unique()]
 
@@ -148,15 +141,7 @@ def layout():
         ]
     )
 
-# ---------------------------
-# Dashboard Callbacks
-# ---------------------------
 def register_callbacks(app):
-    """
-    Register all callbacks needed for the Dashboard page.
-    """
-
-    # Show/Remove All in Dropdowns
     @app.callback(
         [
             Output("outcome-type-dropdown", "value"),
@@ -187,7 +172,6 @@ def register_callbacks(app):
 
         triggered_ids = [trigger['prop_id'].split('.')[0] for trigger in ctx.triggered]
 
-        # Default: select all options for both dropdowns.
         outcome_value = [option['value'] for option in outcome_options]
         crime_value = [option['value'] for option in crime_options]
 
@@ -203,11 +187,7 @@ def register_callbacks(app):
 
         return outcome_value, crime_value
 
-    # ---------------------------
-    # Helper Visualization Functions
-    # ---------------------------
     def _update_fig_layout(fig, is_light_mode):
-        """Update figure layout colors based on theme."""
         if is_light_mode:
             fig.update_layout(
                 paper_bgcolor="white",
@@ -356,9 +336,6 @@ def register_callbacks(app):
         fig = _update_fig_layout(fig, is_light_mode)
         return fig
 
-    # ---------------------------
-    # Main Dashboard Update Callback
-    # ---------------------------
     @app.callback(
         [
             Output("crime-scatter-map", "figure"),
@@ -380,6 +357,7 @@ def register_callbacks(app):
         [State("crime-scatter-map", "relayoutData")]
     )
     def update_dashboard(outcomes, crimes, start_date, end_date, heatmap_switch, is_light_mode, relayout_data):
+        crime_data = load_data()  # Reload data within callback
         df = crime_data[
             crime_data["outcome_type"].isin(outcomes) &
             crime_data["crime_type"].isin(crimes)
@@ -389,14 +367,10 @@ def register_callbacks(app):
             edate = pd.to_datetime(end_date)
             df = df[(df["month"] >= sdate) & (df["month"] <= edate)]
 
-        # Ensure data is in chronological order
         df = df.sort_values("month")
-
         logging.info(f"Dashboard update: {len(df)} records after filtering.")
 
-        # Map data sample
         map_df = df if len(df) <= MAX_POINTS else df.sample(MAX_POINTS)
-
         map_view = {}
         if relayout_data:
             if "mapbox.center" in relayout_data:
