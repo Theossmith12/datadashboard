@@ -28,11 +28,10 @@ def load_data():
         if CLOUD_DEPLOY:
             DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/{DB_NAME}?host=/cloudsql/{DB_CONN_NAME}"
         else:
-            # Adjust user/password/host/port as needed
             DATABASE_URL = "postgresql+psycopg2://postgres:Fluminense99@localhost:5432/crime_data"
 
         engine = create_engine(DATABASE_URL)
-        query = "SELECT * FROM crime_records_enriched LIMIT 1000000"
+        query = "SELECT * FROM crime_records_enriched WHERE census_year = 2015"
 
         if SAMPLE_DATA:
             logging.info("Loading data in chunks with sampling...")
@@ -103,9 +102,3 @@ def reset_cache():
     cache.delete_memoized(load_data)
     cache.delete_memoized(load_lsoa_lookup)
     logging.info("Cache has been manually reset.")
-
-# IMPORTANT: Do NOT pre-load the data at module level.
-# Instead, import and call load_data() and load_lsoa_lookup() within your callbacks or functions,
-# APp model -> 
-
-

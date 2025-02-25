@@ -7,61 +7,75 @@ import plotly.graph_objs as go
 import json
 import pandas as pd
 import os
+import geopandas as gpd  # For computing centroids
 
 from data_loader import load_data, load_lsoa_lookup
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# If you have a Mapbox token, load it; otherwise open-street-map style.
 mapbox_token = os.getenv('MAPBOX_TOKEN')
 if mapbox_token:
     px.set_mapbox_access_token(mapbox_token)
     logging.info("✅ Mapbox token loaded (not required for open-street-map).")
 else:
-    logging.info("No Mapbox token found. Using open-street-map style without a token.")
+    logging.info("No Mapbox token found. Using open-street-map style instead.")
 
 # Load LSOA GeoJSON
-with open("data/lsoa_boundaries.geojson", "r") as f:
+with open("data/alt_lsoa_boundaries.geojson", "r") as f:
     lsoa_geojson = json.load(f)
-logging.info(f"Loaded GeoJSON with {len(lsoa_geojson.get('features', []))} features.")
+logging.info(f"Loaded LSOA GeoJSON with {len(lsoa_geojson.get('features', []))} features.")
+
+# Load London Borough boundaries from "data/london_borough.geojson"
+with open("data/london-boroughs_1179 (1).geojson", "r") as f:
+    borough_geojson = json.load(f)
+logging.info(f"Loaded Borough GeoJSON with {len(borough_geojson.get('features', []))} features.")
 
 MAP_CENTER_LON = -0.1278  # Default map center (London)
 
 def layout():
     """
-    Display a two-row layout:
-      - Row 1: The map and the demographic bar chart.
-      - Row 2: The top-10 LSOA bar chart.
+    Comparison Layout:
+    - Year + Crime Type dropdowns
+    - Choropleth map (LSOA)
+    - Demographic bar chart (on hover)
+    - Hidden store for aggregated data
     """
-    # Get cached data on demand
     crime_data = load_data()
     lsoa_lookup = load_lsoa_lookup()
 
     header = html.Div([
         html.H1("UK Crime Data Comparison", style={"textAlign": "center"}),
         html.P(
-            "Explore aggregated LSOA crime data across the UK. "
-            "Use the filters below to select a crime type and view data for a specific year or for all years. "
-            "Hover over a map location to see a demographic breakdown on the right.",
+            "Explore aggregated LSOA crime data across the UK. Use the filters below to select a crime type "
+            "and view data for a specific year or for all years. Hover over a map location to see a demographic breakdown. "
+            "London borough boundaries and their names are overlaid using 'london_borough.geojson'.",
             style={"textAlign": "center"}
         )
     ], className="page-header", style={"marginBottom": "30px"})
 
-    # Prepare Year & Crime Type dropdown options using the fresh data
+    # Prepare the dropdown options
     available_years = sorted(crime_data["year"].dropna().unique())
     year_options = [{"label": "All Years", "value": "all"}] + [
         {"label": str(y), "value": str(y)} for y in available_years
     ]
-    crime_type_options = [
-        {"label": ct, "value": ct}
-        for ct in crime_data["crime_type"].dropna().unique()
+    crime_type_options = [{"label": "All Crimes", "value": "all"}] + [
+        {"label": ct, "value": ct} for ct in crime_data["crime_type"].dropna().unique()
     ]
 
     return dbc.Container(
         fluid=True,
         children=[
             header,
+            dbc.Row(
+                dbc.Col(
+                    html.Div(
+                        id="lsoa-count",
+                        style={"textAlign": "center", "fontWeight": "bold", "marginBottom": "15px"}
+                    ),
+                    width=12
+                )
+            ),
             dbc.Row([
                 dbc.Col([
                     html.Label("Select Year"),
@@ -78,14 +92,13 @@ def layout():
                     dcc.Dropdown(
                         id="lsoa-crime-dropdown",
                         options=crime_type_options,
-                        value=crime_type_options[0]["value"] if crime_type_options else None,
+                        value="all",
                         clearable=False,
                         className="filter-item"
                     )
-                ], width=6),
+                ], width=6)
             ], className="my-2"),
 
-            # Row for the map and demographic bar chart
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
@@ -111,66 +124,62 @@ def layout():
                 )
             ], className="my-2"),
 
-            # Row for top-10 LSOA bar
-            dbc.Row([
-                dbc.Col(
-                    dcc.Loading(
-                        dcc.Graph(
-                            id="top-10-lsoa-bar",
-                            config={"displayModeBar": False}
-                        ),
-                        type="circle"
-                    ),
-                    width=12
-                )
-            ], className="my-2"),
-
             # Hidden store for aggregated data
             dcc.Store(id="aggregated-data")
         ]
     )
 
 def register_callbacks(app):
-    """Register all callbacks for the Comparison page."""
+    """Comparison page callbacks."""
+
     @app.callback(
         [
             Output("lsoa-choropleth-map", "figure"),
-            Output("top-10-lsoa-bar", "figure"),
-            Output("aggregated-data", "data")
+            Output("aggregated-data", "data"),
+            Output("lsoa-count", "children")
         ],
         [
             Input("lsoa-year-dropdown", "value"),
             Input("lsoa-crime-dropdown", "value"),
-            Input("theme-toggle-switch", "value")
-        ]
+            Input("theme-toggle-btn", "n_clicks")  # replaced the old theme-toggle-switch reference
+        ],
+        [State("theme-container", "className")]
     )
-    def update_map_and_bar(selected_year, selected_crime_type, is_light_mode):
-        logging.debug("update_map_and_bar triggered:")
-        logging.debug(f"  selected_year={selected_year}, selected_crime_type={selected_crime_type}, is_light_mode={is_light_mode}")
-        
-        # Get data from cache on demand
+    def update_map(selected_year, selected_crime, _n_clicks, theme_class):
+        """
+        1) Filter the crime data by selected_year, selected_crime
+        2) Group by LSOA => aggregator
+        3) Build the choropleth map
+        4) Store aggregated data
+        5) Return a text count for the # of LSOAs
+        """
+        logging.info("=== Comparison -> update_map callback ===")
+        logging.info(f"Selected year={selected_year}, selected_crime={selected_crime}")
+
+        is_light_mode = "light-theme" in theme_class
+        logging.info(f"is_light_mode={is_light_mode}")
+
+        # Load the raw data
         crime_data = load_data()
-        lsoa_lookup = load_lsoa_lookup()
+        logging.info(f"Raw data => {len(crime_data)} rows, columns => {crime_data.columns.tolist()}")
 
-        if not selected_crime_type:
-            logging.debug("No crime type selected. Returning empty.")
-            return go.Figure(), go.Figure(), None
+        # Filter by year
+        if selected_year != "all":
+            year_val = int(selected_year)
+            crime_data = crime_data[crime_data["year"] == year_val]
+            logging.info(f"Filtered by year => {len(crime_data)} rows remain")
 
-        if str(selected_year).lower() == "all":
-            df_filtered = crime_data[crime_data["crime_type"] == selected_crime_type]
-        else:
-            df_filtered = crime_data[
-                (crime_data["year"] == int(selected_year)) &
-                (crime_data["crime_type"] == selected_crime_type)
-            ]
-        logging.debug(f"Filtered rows: {len(df_filtered)}")
+        # Filter by crime type
+        if selected_crime != "all":
+            crime_data = crime_data[crime_data["crime_type"] == selected_crime]
+            logging.info(f"Filtered by crime => {len(crime_data)} rows remain")
 
-        if df_filtered.empty:
-            logging.debug("No data after filtering => returning empty.")
-            return go.Figure(), go.Figure(), None
+        if crime_data.empty:
+            logging.warning("No data after filtering => returning empty figure")
+            return go.Figure(), None, "Highlighted LSOAs: 0"
 
-        # Group and aggregate by LSOA
-        grouped = df_filtered.groupby("lsoa_code").agg(
+        # Group by LSOA code & aggregator
+        grouped = crime_data.groupby("lsoa_code").agg(
             crime_count=('lsoa_code', 'size'),
             youth_male_percent=('youth_male_percent', 'mean'),
             youth_female_percent=('youth_female_percent', 'mean'),
@@ -181,14 +190,24 @@ def register_callbacks(app):
             senior_male_percent=('senior_male_percent', 'mean'),
             senior_female_percent=('senior_female_percent', 'mean')
         ).reset_index()
-        logging.debug(f"Grouped sample:\n{grouped.head()}")
 
-        # Merge with LSOA lookup for lsoa_name
+        logging.info(f"grouped => {len(grouped)} rows, columns => {grouped.columns.tolist()}")
+
+        # Merge with LSOA lookup => get "lsoa_name"
+        lsoa_lookup = load_lsoa_lookup()
+        grouped.columns = grouped.columns.str.strip().str.lower()  # ensure consistency
+        lsoa_lookup.columns = lsoa_lookup.columns.str.strip().str.lower()
+
         merged = pd.merge(grouped, lsoa_lookup, on="lsoa_code", how="left")
-        logging.debug(f"Merged sample:\n{merged.head()}")
+        logging.info(f"merged => {len(merged)} rows, columns => {merged.columns.tolist()}")
 
-        # Build the map figure using filtered GeoJSON
+        num_lsoa = merged["lsoa_code"].nunique()
+        lsoa_count_text = f"Highlighted LSOAs: {num_lsoa}"
+
+        # Filter LSOAs for the GeoJSON
         lsoa_codes = merged["lsoa_code"].dropna().unique().tolist()
+        logging.info(f"Unique LSOAs => {len(lsoa_codes)}, sample => {lsoa_codes[:5]}")
+
         filtered_geojson = {
             "type": "FeatureCollection",
             "features": [
@@ -196,8 +215,12 @@ def register_callbacks(app):
                 if feat["properties"].get("LSOA21CD") in lsoa_codes
             ]
         }
-        logging.debug(f"Filtered GeoJSON => {len(filtered_geojson.get('features', []))} features")
+        logging.info(f"filtered_geojson => {len(filtered_geojson['features'])} features remain")
 
+        # Decide map style
+        mapbox_style = "mapbox://styles/mapbox/light-v10" if mapbox_token else "open-street-map"
+
+        # Build the map
         try:
             fig_map = px.choropleth_mapbox(
                 merged,
@@ -207,133 +230,109 @@ def register_callbacks(app):
                 featureidkey="properties.LSOA21CD",
                 hover_name="lsoa_name",
                 hover_data={"crime_count": True},
-                mapbox_style="open-street-map",
+                mapbox_style=mapbox_style,
                 zoom=10,
-                center={"lat": 51.5074, "lon": MAP_CENTER_LON},
+                center={"lat": 51.5074, "lon": -0.1278},
                 opacity=0.6,
                 color_continuous_scale="YlOrRd"
             )
+            # Overlay borough boundaries
             fig_map.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                margin={"l": 0, "r": 0, "t": 0, "b": 0},
-                coloraxis_showscale=False
+                mapbox=dict(
+                    layers=[
+                        {
+                            "source": borough_geojson,
+                            "type": "line",
+                            "below": "traces",
+                            "color": "black",
+                            "line": {"width": 2}
+                        }
+                    ]
+                ),
+                margin={"l": 0, "r": 0, "t": 0, "b": 0}
             )
-            logging.debug("Map created successfully.")
-        except Exception as ex:
-            logging.error(f"Error creating map => {ex}")
+            logging.info("Choropleth map created successfully.")
+        except Exception as e:
+            logging.error(f"Error building map => {e}")
             fig_map = go.Figure()
 
-        try:
-            top10 = merged.nlargest(10, "crime_count")
-            font_color = "#000000" if is_light_mode else "#FFFFFF"
-            axis_color = font_color
-            gridcolor = "rgba(0,0,0,0.2)" if is_light_mode else "rgba(255,255,255,0.2)"
-
-            fig_bar = px.bar(
-                top10,
-                x="lsoa_name",
-                y="crime_count",
-                title="Top 10 LSOAs by Crime Count",
-                hover_data=["lsoa_code"],
-                color_discrete_sequence=["#FF4B4B"]
-            )
-            fig_bar.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                font_color=font_color,
-                title_font_color=font_color,
-                xaxis=dict(
-                    title="LSOA Name",
-                    color=axis_color,
-                    linecolor=axis_color,
-                    tickcolor=axis_color,
-                    gridcolor=gridcolor
-                ),
-                yaxis=dict(
-                    title="Crime Count",
-                    color=axis_color,
-                    linecolor=axis_color,
-                    tickcolor=axis_color,
-                    gridcolor=gridcolor
-                ),
-                hoverlabel=dict(
-                    bgcolor="rgba(0,0,0,0.7)",
-                    font_color="white"
-                )
-            )
-            logging.debug("Top-10 bar chart created successfully.")
-        except Exception as ex:
-            logging.error(f"Error creating top-10 bar => {ex}")
-            fig_bar = go.Figure()
-
-        return fig_map, fig_bar, merged.to_dict('records')
+        return fig_map, merged.to_dict("records"), lsoa_count_text
 
     @app.callback(
         Output("demographic-bar", "figure"),
         [
             Input("lsoa-choropleth-map", "hoverData"),
-            Input("theme-toggle-switch", "value")
+            Input("theme-toggle-btn", "n_clicks")
         ],
-        [State("aggregated-data", "data")]
+        [
+            State("theme-container", "className"),
+            State("aggregated-data", "data")
+        ]
     )
-    def update_demo_bar(hoverData, is_light_mode, aggregated_data):
-        logging.debug("update_demo_bar triggered.")
-        logging.debug(f"  hoverData => {hoverData}, is_light_mode => {is_light_mode}")
+    def update_demo_bar(hoverData, _theme_clicks, theme_class, aggregated_data):
+        """
+        Builds a bar chart of demographic info for the hovered LSOA.
+        """
+        logging.info("=== comparison -> update_demo_bar ===")
 
+        is_light_mode = "light-theme" in theme_class
         if not hoverData or not aggregated_data:
-            logging.debug("No hoverData or aggregated_data => empty figure.")
+            logging.info("No hoverData or no aggregated_data => empty fig")
             return go.Figure()
 
+        # Attempt to parse the hovered LSOA code
         points = hoverData.get("points", [])
         if not points:
-            logging.debug("hoverData has no points => empty figure.")
+            logging.info("hoverData has no points => empty fig")
             return go.Figure()
 
-        point = points[0]
-        lsoa_code = point.get("location")
+        lsoa_code = points[0].get("location")
         if not lsoa_code:
-            logging.debug("No location in hover point => empty figure.")
+            logging.info("No location in points => empty fig")
             return go.Figure()
 
         df_agg = pd.DataFrame(aggregated_data)
+        # Verify columns
+        logging.info(f"df_agg columns => {df_agg.columns.tolist()}")
         record_df = df_agg[df_agg["lsoa_code"] == lsoa_code]
         if record_df.empty:
-            logging.debug("No matching record in aggregated data => empty figure.")
+            logging.info("No matching row in aggregated_data => empty fig")
             return go.Figure()
 
-        record = record_df.iloc[0]
-        logging.debug(f"Matched LSOA record => {record}")
-        lsoa_name = record.get("lsoa_name", lsoa_code)
+        rec = record_df.iloc[0]
+        lsoa_name = rec.get("lsoa_name", lsoa_code)
 
+        # Build your demographic dict
         demo_dict = {
-            "Youth Male": record.get("youth_male_percent", 0),
-            "Youth Female": record.get("youth_female_percent", 0),
-            "Young Adult Male": record.get("young_adult_male_percent", 0),
-            "Young Adult Female": record.get("young_adult_female_percent", 0),
-            "Adult Male": record.get("adult_male_percent", 0),
-            "Adult Female": record.get("adult_female_percent", 0),
-            "Senior Male": record.get("senior_male_percent", 0),
-            "Senior Female": record.get("senior_female_percent", 0)
+            "Youth Male": rec.get("youth_male_percent", 0),
+            "Youth Female": rec.get("youth_female_percent", 0),
+            "Young Adult Male": rec.get("young_adult_male_percent", 0),
+            "Young Adult Female": rec.get("young_adult_female_percent", 0),
+            "Adult Male": rec.get("adult_male_percent", 0),
+            "Adult Female": rec.get("adult_female_percent", 0),
+            "Senior Male": rec.get("senior_male_percent", 0),
+            "Senior Female": rec.get("senior_female_percent", 0)
         }
+
         demo_df = pd.DataFrame(list(demo_dict.items()), columns=["Group", "Percentage"])
-        demo_df = demo_df.sort_values(by="Percentage", ascending=False)
+        demo_df.sort_values("Percentage", ascending=False, inplace=True)
 
         fig = px.bar(
             demo_df,
             x="Percentage",
             y="Group",
             orientation="h",
-            text="Percentage"
+            title=f"Demographics for {lsoa_name}"
         )
         fig.update_traces(
-            texttemplate='%{text:.2f}%',
+            texttemplate='%{x:.2f}%',
             textposition='outside',
             marker_color='lightskyblue'
         )
+
+        # Adjust theme
         font_color = "#000000" if is_light_mode else "#e0e0e0"
         fig.update_layout(
-            title=f"Demographics for {lsoa_name}",
             title_font=dict(size=14, family='Poppins, sans-serif', color=font_color, weight='bold'),
             xaxis_title="Percentage",
             yaxis_title="Group",
@@ -344,4 +343,5 @@ def register_callbacks(app):
         )
         fig.update_yaxes(autorange="reversed")
 
+        logging.info(f"Built demographics chart for LSOA {lsoa_code}")
         return fig
