@@ -179,15 +179,18 @@ def layout():
         ],
         style={'padding': '20px', 'borderRadius': '10px', 'marginBottom': '20px'}
     )
-
     scroll_container = html.Div(
         children=[
             # Row 1: Borough Map & Relative Crime Distribution
+            html.H3("Borough Analysis", className="section-title mt-4 mb-3", 
+                    style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
+            html.P("Click on a borough to see how crime types differ from the London average. Blue bars indicate higher rates, red bars show lower rates.", 
+                className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
                         dcc.Graph(id="borough-map", config={"displayModeBar": False, "scrollZoom": True},
-                                  style={"height": "500px"}),
+                                style={"height": "500px"}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=12, lg=6
@@ -197,15 +200,32 @@ def layout():
                         html.Div([
                             html.Div(id="borough-title", className="borough-title"),
                             dcc.Graph(id="relative-crime-distribution", config={"displayModeBar": False},
-                                      style={"height": "460px"})
+                                    style={"height": "460px"})
                         ]),
                         type="circle"
                     ),
                     xs=12, sm=12, md=12, lg=6
                 )
-            ], className="my-2"),
+            ], className="my-3 mb-5"),
 
-            # Row 2: Heatmap
+            # Row 2: Heatmap with embedded controls
+            html.H3("Geographic Crime Distribution", className="section-title mt-5 mb-3", 
+                    style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
+            html.P("Visualize crime density across London. Darker areas indicate higher concentration of criminal activity.", 
+                className="text-muted mb-3"),
+            # Heatmap controls
+            dbc.Row([
+                dbc.Col(
+                    dbc.Switch(
+                        id="heatmap-mode-switch",
+                        label="Live Viewing (Animate Over Time)",
+                        value=False,
+                        className="mb-3"
+                    ),
+                    width={"size": 6, "offset": 3},
+                    style={"textAlign": "center"}
+                )
+            ]),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
@@ -214,9 +234,13 @@ def layout():
                     ),
                     width=12
                 )
-            ], className="my-2"),
+            ], className="mb-5"),
 
             # Row 3: Time Series & Outcome Bar
+            html.H3("Temporal Patterns and Outcomes", className="section-title mt-5 mb-3", 
+                    style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
+            html.P("Analyze how crime rates change over time and the distribution of case outcomes.", 
+                className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
@@ -232,9 +256,13 @@ def layout():
                     ),
                     xs=12, sm=12, md=6, lg=6
                 )
-            ], className="my-2"),
+            ], className="mb-5"),
 
             # Row 4: Crime-Type Bar & Yearly Comparison
+            html.H3("Crime Types and Yearly Trends", className="section-title mt-5 mb-3", 
+                    style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
+            html.P("Explore the distribution of crime types and how they've changed over the years.", 
+                className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
@@ -250,16 +278,35 @@ def layout():
                     ),
                     xs=12, sm=12, md=6, lg=6
                 )
-            ], className="my-2"),
+            ], className="mb-5"),
 
             # Summary Statistics
+            html.H3("Key Findings", className="section-title mt-5 mb-3", 
+                    style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
+            html.P("Summary of the current data selection and key statistics.", 
+                className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(html.Div(id="summary-statistics", className="summary"), width=12)
-            ], className="my-2")
+            ], className="mb-4"),
+            
+            # Reset Cache Button at bottom
+            dbc.Row([
+                dbc.Col(
+                    dbc.Button(
+                        "Reset Cache",
+                        id="reset-cache-btn",
+                        color="secondary",
+                        size="sm",
+                        className="mx-auto d-block mt-4 mb-4"
+                    ),
+                    width={"size": 2, "offset": 5}
+                )
+            ], className="mt-3 mb-5")
         ],
         className="dashboard-scroll-container"
     )
 
+    
     return dbc.Container(
         fluid=True,
         children=[header_section, filters_container, scroll_container]
@@ -672,7 +719,6 @@ def generate_yearly_comparison_chart(filtered_data, is_light_mode):
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
         Input("heatmap-mode-switch", "value"),
-        Input("toggle-filters-btn", "n_clicks"),
         Input("borough-map", "clickData"),
         Input("show-borough-labels", "value")
     ],
@@ -681,7 +727,7 @@ def generate_yearly_comparison_chart(filtered_data, is_light_mode):
         State("theme-container", "data-theme")  # Using as State to avoid excessive triggers
     ]
 )
-def update_dashboard(outcomes, crimes, start_date, end_date, heatmap_switch, _toggle_clicks,
+def update_dashboard(outcomes, crimes, start_date, end_date, heatmap_switch,
                      click_data, show_labels, relayout_data, data_theme):
     """
     Main callback for updating the dashboard components.

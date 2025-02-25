@@ -209,9 +209,14 @@ button, .reset-button {
    Scrollable Dashboard Container
 ------------------------------ */
 .dashboard-scroll-container {
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 10px;
+    overflow-y: visible !important;
+    max-height: none !important;
+    overflow-x: hidden;
+}
+
+.container-fluid {
+    overflow: visible !important;
+    max-width: 100%;
 }
 
 /* ------------------------------

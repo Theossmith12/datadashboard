@@ -37,13 +37,7 @@ app.layout = html.Div(
                 html.Div(
                     className="nav-toggles",
                     children=[
-                        # Live Viewing switch for heatmap animations
-                        dbc.Switch(
-                            id="heatmap-mode-switch",
-                            label="Live Viewing",
-                            value=False,
-                            className="toggle-switch"  # for consistent styling
-                        ),
+                        
                         # Dark/Light theme toggle via button + icon
                         html.Button(
                             [html.Img(id="theme-toggle-icon", src="/assets/dark-mode-toggle-icon.png", className="toggle-icon")],
