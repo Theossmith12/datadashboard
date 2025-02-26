@@ -44,15 +44,8 @@ app.layout = html.Div(
                             id="theme-toggle-btn",
                             n_clicks=0,
                             className="theme-toggle-btn"
-                        ),
-                        # Reset Cache
-                        dbc.Button(
-                            "Reset Cache",
-                            id="reset-cache-btn",
-                            color="secondary",
-                            size="sm",
-                            className="reset-button ms-2"
                         )
+                        
                     ],
                     style={"display": "flex", "alignItems": "center", "gap": "15px"}
                 )

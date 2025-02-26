@@ -58,3 +58,6 @@ def register_callbacks(app):
             count = point['y']
             return f"Forecast for {month}: {count:.0f} crimes predicted."
         return "Click on a data point in the forecast chart for details."
+
+
+print(__name__)

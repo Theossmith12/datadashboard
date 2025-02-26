@@ -14,12 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-mapbox_token = os.getenv('MAPBOX_TOKEN')
-if mapbox_token:
-    px.set_mapbox_access_token(mapbox_token)
-    logging.info("✅ Mapbox token loaded (not required for open-street-map).")
-else:
-    logging.info("No Mapbox token found. Using open-street-map style instead.")
+
 
 # Load LSOA GeoJSON
 with open("data/alt_lsoa_boundaries.geojson", "r") as f:
@@ -218,7 +213,7 @@ def register_callbacks(app):
         logging.info(f"filtered_geojson => {len(filtered_geojson['features'])} features remain")
 
         # Decide map style
-        mapbox_style = "mapbox://styles/mapbox/light-v10" if mapbox_token else "open-street-map"
+        mapbox_style = "open-street-map"
 
         # Build the map
         try:

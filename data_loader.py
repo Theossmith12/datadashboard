@@ -1,104 +1,99 @@
-import os
 import logging
 import pandas as pd
-from sqlalchemy import create_engine
-from dotenv import load_dotenv
-from cache_config import cache  # Use our external persistent cache
+from cache_config import cache
+from data_service import CrimeDataService
 
-load_dotenv()
+# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
 
-# Configuration Flags
-CLOUD_DEPLOY = False
-SAMPLE_DATA = True
-CHUNK_SIZE = 10000
+# Initialize data service
+data_service = CrimeDataService()
 
 @cache.memoize(timeout=0)
 def load_data():
     """
-    Load crime data from the PostgreSQL database using chunking and optional sampling.
-    Selects all columns from 'crime_records_enriched' and adds a 'year' column.
+    Load crime data from the database using the data service.
+    Returns a DataFrame with all necessary columns for the dashboard.
     """
-    try:
-        DB_USER = os.getenv('DB_USER')
-        DB_PASS = os.getenv('DB_PASSWORD')
-        DB_NAME = os.getenv('DB_NAME')
-        DB_CONN_NAME = os.getenv('INSTANCE_CONNECTION_NAME')
+    logger.info("Loading complete crime data through data service...")
+    # Don't specify columns to get all columns (original behavior)
+    return data_service.get_filtered_crime_data(filters={'census_year': 2015})
 
-        if CLOUD_DEPLOY:
-            DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/{DB_NAME}?host=/cloudsql/{DB_CONN_NAME}"
-        else:
-            DATABASE_URL = "postgresql+psycopg2://postgres:Fluminense99@localhost:5432/crime_data"
-
-        engine = create_engine(DATABASE_URL)
-        query = "SELECT * FROM crime_records_enriched WHERE census_year = 2015"
-
-        if SAMPLE_DATA:
-            logging.info("Loading data in chunks with sampling...")
-            chunks = pd.read_sql(query, engine, chunksize=CHUNK_SIZE)
-            data_list = []
-            for i, chunk in enumerate(chunks, start=1):
-                logging.info(f"Processing chunk {i} with {len(chunk)} rows...")
-                sampled_chunk = chunk.sample(frac=1.0)
-                data_list.append(sampled_chunk)
-            data = pd.concat(data_list, ignore_index=True)
-        else:
-            logging.info("Loading full dataset without sampling...")
-            data = pd.read_sql(query, engine)
-
-        if 'month' in data.columns:
-            data['month'] = pd.to_datetime(data['month'], errors='coerce')
-            data['year'] = data['month'].dt.year
-
-        if 'longitude' in data.columns:
-            data['longitude'] = pd.to_numeric(data['longitude'], downcast='float', errors='coerce')
-        if 'latitude' in data.columns:
-            data['latitude'] = pd.to_numeric(data['latitude'], downcast='float', errors='coerce')
-        if 'crime_type' in data.columns:
-            data['crime_type'] = data['crime_type'].astype('category')
-        if 'outcome_type' in data.columns:
-            data['outcome_type'] = data['outcome_type'].astype('category')
-
-        logging.info("Data loaded successfully from crime_records_enriched.")
-        logging.info(f"Data types:\n{data.dtypes}")
-        logging.info(f"First few rows:\n{data.head()}")
-        return data
-
-    except Exception as e:
-        logging.error(f"Failed to load data: {e}")
-        return pd.DataFrame()
+@cache.memoize(timeout=0)
+def load_filtered_data(filters=None, columns=None):
+    """
+    Load only the necessary columns and filtered rows.
+    
+    Parameters:
+    -----------
+    filters : dict
+        Filters to apply
+    columns : list
+        Only load these specific columns
+    """
+    logger.info(f"Loading filtered data with columns={columns} and filters={filters}")
+    return data_service.get_filtered_crime_data(filters, columns)
 
 @cache.memoize(timeout=0)
 def load_lsoa_lookup():
     """
-    Load the LSOA lookup table mapping lsoa_id, lsoa_code, lsoa_name, etc.
+    Load the LSOA lookup table using the data service.
     """
-    try:
-        DB_USER = os.getenv('DB_USER')
-        DB_PASS = os.getenv('DB_PASSWORD')
-        DB_NAME = os.getenv('DB_NAME')
-        DB_CONN_NAME = os.getenv('INSTANCE_CONNECTION_NAME')
+    logger.info("Loading LSOA lookup through data service...")
+    return data_service.get_lsoa_lookup()
 
-        if CLOUD_DEPLOY:
-            DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@/{DB_NAME}?host=/cloudsql/{DB_CONN_NAME}"
-        else:
-            DATABASE_URL = "postgresql+psycopg2://postgres:Fluminense99@localhost:5432/crime_data"
+@cache.memoize(timeout=0)
+def load_demographic_data(lsoa_codes=None):
+    """
+    Load demographic data for specified LSOAs.
+    """
+    logger.info(f"Loading demographic data for {len(lsoa_codes) if lsoa_codes else 'all'} LSOAs...")
+    return data_service.get_demographic_data(lsoa_codes)
 
-        engine = create_engine(DATABASE_URL)
-        query = "SELECT lsoa_id, lsoa_code, lsoa_name FROM lsoa_lookup"
-        df = pd.read_sql(query, engine)
-        logging.info(f"LSOA lookup loaded successfully with {len(df)} rows.")
-        return df
+@cache.memoize(timeout=0)
+def load_aggregated_data(group_by_columns, metric_columns=None, filters=None):
+    """
+    Load pre-aggregated data from the database.
+    
+    Parameters:
+    -----------
+    group_by_columns : list
+        Columns to group by (e.g., ['lsoa_code', 'crime_type'])
+    metric_columns : dict
+        Dict mapping column names to aggregation functions
+    filters : dict
+        Filters to apply before aggregation
+    """
+    logger.info(f"Loading aggregated data, grouping by {group_by_columns}")
+    return data_service.get_aggregated_data(group_by_columns, metric_columns, filters)
 
-    except Exception as e:
-        logging.error(f"Failed to load lsoa_lookup: {e}")
-        return pd.DataFrame()
+@cache.memoize(timeout=0)
+def load_unique_values(column_name):
+    """
+    Get unique values for a column directly from the database.
+    Useful for populating dropdown options without loading all data.
+    """
+    logger.info(f"Loading unique values for {column_name}")
+    return data_service.get_unique_values(column_name)
 
 def reset_cache():
     """
-    Manually reset the cached data. This clears the cached results for both the crime data and LSOA lookup,
+    Manually reset the cached data. This clears the cached results for all data functions,
     ensuring that subsequent calls fetch fresh data from the database.
     """
     cache.delete_memoized(load_data)
+    cache.delete_memoized(load_filtered_data)
     cache.delete_memoized(load_lsoa_lookup)
-    logging.info("Cache has been manually reset.")
+    cache.delete_memoized(load_demographic_data)
+    cache.delete_memoized(load_aggregated_data)
+    cache.delete_memoized(load_unique_values)
+    logger.info("Cache has been manually reset for all data functions.")
+
+def run_custom_query(query, params=None):
+    """
+    Run a custom SQL query through the data service.
+    This function is not cached - use with caution.
+    """
+    logger.warning("Running custom query (uncached) - use with caution")
+    return data_service.run_custom_query(query, params)

@@ -1,7 +1,8 @@
 window.dash_clientside = Object.assign({}, window.dash_clientside, {
     clientside: {
         updateTheme: function(n_clicks, currentTheme) {
-            if (n_clicks === null) return currentTheme || 'dark';
+            // If no clicks have occurred, keep the current theme
+            if (n_clicks === 0) return currentTheme;
             
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             

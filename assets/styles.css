@@ -192,13 +192,13 @@ button, .reset-button {
     margin-bottom: 20px;
 }
 
-/* ------------------------------
-   Graphs & Containers
------------------------------- */
 .graph-container {
-    padding: 20px;
-    animation: fadeIn 1s ease-out;
+    width: 100%;
+    min-height: 300px;
+    height: calc(50vh - 100px);
+    transition: all 0.3s ease;
 }
+
 .graph-container h2 {
     color: #1E90FF;
     text-align: center;
@@ -318,10 +318,104 @@ button, .reset-button {
 .feedback-page button:hover {
     background-color: #0d47a1;
 }
+/* Dark mode dropdown styling */
+.dark-theme .Select-control,
+.dark-theme .Select-menu-outer {
+  background-color: #333;
+  color: white;
+  border-color: #555;
+}
 
-/* ------------------------------
-   Smooth Scrolling
------------------------------- */
-html {
-    scroll-behavior: smooth;
+.dark-theme .Select-value-label,
+.dark-theme .Select-placeholder,
+.dark-theme .Select-arrow {
+  color: white !important;
+}
+
+.dark-theme .Select-menu-outer .VirtualizedSelectOption {
+  background-color: #333;
+  color: white;
+}
+
+.dark-theme .Select-menu-outer .VirtualizedSelectOption:hover {
+  background-color: #444;
+}
+
+/* Light mode dropdown styling */
+.light-theme .Select-control,
+.light-theme .Select-menu-outer {
+  background-color: white;
+  color: black;
+  border-color: #ddd;
+}
+
+.light-theme .Select-value-label,
+.light-theme .Select-placeholder,
+.light-theme .Select-arrow {
+  color: black !important;
+}
+
+.light-theme .Select-menu-outer .VirtualizedSelectOption {
+  background-color: white;
+  color: black;
+}
+
+.light-theme .Select-menu-outer .VirtualizedSelectOption:hover {
+  background-color: #f5f5f5;
+}
+
+
+/* Media queries for different screen sizes */
+@media (max-width: 992px) {
+    .graph-container {
+        height: 400px;
+    }
+    
+    .dashboard-row {
+        flex-direction: column;
+    }
+    
+    .col-lg-6 {
+        width: 100%;
+    }
+    
+    .filters-container {
+        flex-direction: column;
+    }
+    
+    .filter-item {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .graph-container {
+        height: 350px;
+    }
+    
+    .nav-links {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .summary {
+        width: 100%;
+        padding: 10px;
+    }
+    
+    .filter-label-input {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-label-input label {
+        flex-basis: 100%;
+        text-align: left;
+        margin-bottom: 5px;
+    }
+    
+    .filter-label-input .filter-input {
+        flex-basis: 100%;
+    }
 }
