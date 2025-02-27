@@ -36,55 +36,263 @@ body {
    Navbar & Tabs (Navigation)
 ------------------------------ */
 .navbar {
-    background-color: #1f1f1f;
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    transition: background-color 0.5s ease, color 0.5s ease;
-}
-.nav-links {
-    display: flex;
-    flex: 1;
-    justify-content: space-evenly;
-    align-items: center;
-}
-.nav-links .nav-link {
-    color: #b3b3b3;
-    text-decoration: none;
-    font-size: 1.2em;
-    font-weight: 600;
-    transition: transform 0.3s ease, color 0.3s ease;
-    text-align: center;
-    padding: 10px;
-}
-.nav-links .nav-link:hover {
-    transform: scale(1.05);
-    color: #1E90FF;
-}
-.nav-links .nav-link.active {
-    font-weight: bold;
-    border-bottom: 2px solid #1E90FF;
-}
-.nav-toggles {
-    display: flex;
-    align-items: center;
-    margin-right: 10px;
-    gap: 15px;
+    height: auto !important;
+    min-height: 60px !important;
+    background-color: #2c3035 !important; /* Improved gray color */
+    padding: 10px 15px !important;
+    overflow: visible !important;
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    z-index: 1000 !important;
 }
 
-/* Light Theme Overrides for Navbar */
-.light-theme .navbar {
-    background-color: #f8f9fa !important;
+#theme-container > .navbar {
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 1000 !important;
 }
-.light-theme .navbar a {
-    color: #000000 !important;
+
+.nav-links {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 15px !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
-.light-theme .navbar a:hover {
-    color: #1E90FF !important;
+
+.nav-toggles {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin-left: auto !important;
+    gap: 12px !important;
+}
+
+/* Hide theme toggle button in nav-toggles on mobile */
+@media (max-width: 768px) {
+    .nav-toggles .theme-toggle-btn {
+        display: none;
+    }
+}
+
+/* ------------------------------
+   Mobile Hamburger Menu & Collapse/Reveal
+------------------------------ */
+@media (max-width: 768px) {
+    /* Collapse nav-links by default; reveal when .active class is applied */
+    .nav-links {
+         display: none !important;
+         flex-direction: column !important;
+         width: 100% !important;
+         padding-top: 50px !important;
+    }
+    .nav-links.active {
+         display: flex !important;
+    }
+    
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px !important;
+        min-height: 60px !important;
+    }
+    
+    .hamburger-menu {
+        display: flex !important;
+    }
+    
+    .nav-toggles {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        margin: 0;
+        display: flex !important;
+    }
+    
+    /* Mobile: Ensure the theme toggle inside the mobile container is visible */
+    #mobile-theme-toggle .theme-toggle-btn {
+        display: flex !important;
+    }
+}
+
+/* ------------------------------
+   Desktop Navbar Layout (min-width: 769px)
+------------------------------ */
+@media (min-width: 769px) {
+    .navbar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        height: 60px !important;
+        padding: 10px 15px !important;
+    }
+    .nav-links {
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-evenly !important;  /* Spread links evenly */
+        align-items: center !important;
+        padding-top: 0 !important;
+    }
+}
+
+/* ------------------------------
+   Mobile Specific Adjustments for Smaller Screens
+------------------------------ */
+@media (max-width: 576px) {
+    .graph-container {
+        height: 350px;
+    }
+    
+    .summary {
+        width: 100%;
+        padding: 10px;
+    }
+    
+    .filter-label-input {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-label-input label {
+        flex-basis: 100%;
+        text-align: left;
+        margin-bottom: 5px;
+    }
+    
+    .filter-label-input .filter-input {
+        flex-basis: 100%;
+    }
+    
+    /* Improve tap targets on mobile */
+    button, .nav-link, .theme-toggle-btn {
+        min-height: 44px;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Adjust spacing for mobile */
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* ------------------------------
+   Mobile Hamburger Menu Container for Theme Toggle
+------------------------------ */
+#mobile-theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+/* ------------------------------
+   Theme Toggle & Logout Button Styles
+------------------------------ */
+.theme-toggle-btn, .logout-btn {
+    padding: 8px 12px !important;
+    margin: 0 4px !important;
+    background-color: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 36px !important;
+    min-width: 36px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.logout-btn {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 5px !important;
+    color: #e0e0e0 !important;
+}
+
+.logout-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.toggle-icon {
+    width: 36px !important; /* Increased to match logout button */
+    height: 36px !important; /* Increased to match logout button */
+    margin: 0 !important;
+    padding: 0 !important;
+    cursor: pointer;
+    display: block;
+    transition: filter 0.3s ease !important;
+}
+
+.dark-theme .toggle-icon {
+    filter: invert(1);
+}
+
+.light-theme .toggle-icon {
+    filter: invert(0);
+}
+
+/* ------------------------------
+   Hamburger Menu Styles
+------------------------------ */
+.hamburger-menu {
+    display: none;
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 9999 !important;
+    width: 30px;
+    height: 20px;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+button[aria-label="Toggle Navigation"] {
+    display: none !important;
+}
+
+.hamburger-menu span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background-color: #b3b3b3;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+}
+
+.dark-theme .hamburger-menu span {
+    background-color: #e0e0e0;
+}
+
+.light-theme .hamburger-menu span {
+    background-color: #000000;
 }
 
 /* ------------------------------
@@ -94,7 +302,6 @@ body {
     font-weight: 600;
 }
 
-/* Live Viewing Toggle */
 .toggle-switch .form-check-input {
     transform: scale(1.1);
     margin-right: 6px;
@@ -110,7 +317,6 @@ button, .reset-button {
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Reset Cache Button */
 .reset-button {
     background-color: #444;
     color: white;
@@ -122,37 +328,10 @@ button, .reset-button {
     transform: scale(1.05);
 }
 
-/* The Dark/Light Mode Toggle Button */
-.theme-toggle-btn {
-    background: transparent;
-    border: none;
-    padding: 2px 4px;
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-    transition: filter 0.3s ease, transform 0.2s ease;
-}
 .theme-toggle-btn:hover {
+    transform: scale(1.1);
     filter: brightness(1.2);
-    transform: scale(1.05);
 }
-
-/* Dark Theme Toggle Icon */
-.toggle-icon {
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
-}
-
-.dark-theme .toggle-icon {
-    filter: invert(1);
-}
-
-
-
-
-
-
 
 /* ------------------------------
    Filters Container & Filter Layout
@@ -186,6 +365,33 @@ button, .reset-button {
 }
 
 /* ------------------------------
+   Scrolling Reveal Animation
+------------------------------ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reveal {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    transform: translateY(20px);
+}
+
+.reveal.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* ------------------------------
    Collapsible Filters
 ------------------------------ */
 #dashboard-filters-collapse {
@@ -211,7 +417,7 @@ button, .reset-button {
 .dashboard-scroll-container {
     overflow-y: visible !important;
     max-height: none !important;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
 }
 
 .container-fluid {
@@ -318,7 +524,10 @@ button, .reset-button {
 .feedback-page button:hover {
     background-color: #0d47a1;
 }
-/* Dark mode dropdown styling */
+
+/* ------------------------------
+   Dropdown Styling
+------------------------------ */
 .dark-theme .Select-control,
 .dark-theme .Select-menu-outer {
   background-color: #333;
@@ -341,7 +550,6 @@ button, .reset-button {
   background-color: #444;
 }
 
-/* Light mode dropdown styling */
 .light-theme .Select-control,
 .light-theme .Select-menu-outer {
   background-color: white;
@@ -364,58 +572,47 @@ button, .reset-button {
   background-color: #f5f5f5;
 }
 
-
-/* Media queries for different screen sizes */
-@media (max-width: 992px) {
-    .graph-container {
-        height: 400px;
-    }
-    
-    .dashboard-row {
-        flex-direction: column;
-    }
-    
-    .col-lg-6 {
-        width: 100%;
-    }
-    
-    .filters-container {
-        flex-direction: column;
-    }
-    
-    .filter-item {
-        width: 100%;
-        margin-bottom: 15px;
-    }
+/* ------------------------------
+   Section Titles Enhancement
+------------------------------ */
+.section-title {
+    position: relative;
+    padding-bottom: 10px;
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    color: #1E90FF;
 }
 
-@media (max-width: 576px) {
-    .graph-container {
-        height: 350px;
-    }
-    
-    .nav-links {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .summary {
-        width: 100%;
-        padding: 10px;
-    }
-    
-    .filter-label-input {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .filter-label-input label {
-        flex-basis: 100%;
-        text-align: left;
-        margin-bottom: 5px;
-    }
-    
-    .filter-label-input .filter-input {
-        flex-basis: 100%;
-    }
+/* ------- Dash Debug Menu Overrides ------- */
+.nav-links .nav-link {
+    color: #e0e0e0 !important;
+    text-decoration: none !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    transition: transform 0.3s ease, color 0.3s ease !important;
+    text-align: center !important;
+    padding: 10px !important;
+    opacity: 0.9 !important;
+}
+
+.nav-links .nav-link:hover {
+    transform: scale(1.05) !important;
+    color: #1E90FF !important;
+    opacity: 1 !important;
+}
+
+.nav-links .nav-link.active {
+    font-weight: bold !important;
+    border-bottom: 2px solid #1E90FF !important;
+    color: #1E90FF !important;
+    opacity: 1 !important;
+}
+
+/* ------------------------------
+   Animation Keyframes
+------------------------------ */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
