@@ -79,6 +79,68 @@ body {
     gap: 12px !important;
 }
 
+.map-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Borough hover effects */
+.borough-layer {
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.borough-layer:hover {
+    opacity: 0.7 !important;
+}
+
+.borough-name {
+    font-size: 14px;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+.double-tap-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.tap-instruction {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 /* Hide theme toggle button in nav-toggles on mobile */
 @media (max-width: 768px) {
     .nav-toggles .theme-toggle-btn {
@@ -123,6 +185,20 @@ body {
     /* Mobile: Ensure the theme toggle inside the mobile container is visible */
     #mobile-theme-toggle .theme-toggle-btn {
         display: flex !important;
+    }
+    
+    .map-container {
+        height: 400px;  /* Adjusted height for mobile */
+    }
+    
+    .double-tap-overlay {
+        background-color: rgba(0, 0, 0, 0.8);
+    }
+    
+    .tap-instruction {
+        font-size: 1rem;
+        width: 80%;
+        max-width: 300px;
     }
 }
 
@@ -389,7 +465,10 @@ button, .reset-button {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    /* Ensure the final state persists */
+    animation-fill-mode: forwards;
 }
+
 
 /* ------------------------------
    Collapsible Filters
@@ -615,4 +694,306 @@ button, .reset-button {
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+/* ------------------------------
+   Mobile Optimizations for Better UX
+------------------------------ */
+@media (max-width: 768px) {
+    /* Improve typography for readability */
+    body {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    /* Enlarge touch targets for better accessibility */
+    button, 
+    .nav-link, 
+    .Select-control,
+    .filter-item,
+    .theme-toggle-btn {
+        min-height: 44px;
+    }
+    
+    /* Add spacing between elements */
+    .dashboard-row {
+        margin-bottom: 30px;
+    }
+    
+    /* Improve section headers */
+    .section-title {
+        font-size: 18px;
+        text-align: center;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+    
+    /* Make dropdowns easier to use */
+    .Select-menu-outer {
+        max-height: 50vh !important;
+    }
+    
+    /* Better contrast for info text */
+    .text-muted {
+        opacity: 0.8;
+    }
+    
+    /* Add bottom padding for bottom navigation */
+    #page-content {
+        padding-bottom: 70px;
+    }
+    
+    /* Mobile-friendly cards */
+    .summary {
+        padding: 15px;
+        margin: 10px 5px;
+        border-radius: 10px;
+    }
+    
+    /* Improve loading indicators */
+    ._dash-loading {
+        margin-top: 30%;
+    }
+    
+    /* Bottom sheet navigation */
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background-color: #2c3035;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        justify-content: space-around;
+        align-items: center;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Filter modal styles */
+    .filter-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2000;
+        background-color: rgba(0,0,0,0.5);
+        overflow: hidden;
+    }
+    .filter-modal-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 80vh;
+        background-color: #121212;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        overflow-y: auto;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .filter-modal.active .filter-modal-content {
+        transform: translateY(0);
+    }
+    
+    /* Pull to refresh indicator */
+    .pull-indicator {
+        height: 0;
+        overflow: hidden;
+        text-align: center;
+        transition: height 0.2s;
+        color: #1E90FF;
+    }
+    
+    .pull-icon {
+        margin: 10px auto;
+        width: 24px;
+        height: 24px;
+        border: 2px solid #1E90FF;
+        border-top-color: transparent;
+        border-radius: 50%;
+    }
+    
+    .pull-icon.refreshing {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Mobile summary card for quick stats */
+    .mobile-summary-card {
+        margin: 10px 5px 20px;
+        padding: 15px;
+        border-radius: 12px;
+        background-color: #1f1f1f;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .light-theme .mobile-summary-card {
+        background-color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .mobile-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        background-color: rgba(30, 144, 255, 0.1);
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        opacity: 0.7;
+    }
+    
+    /* Filter chips for mobile */
+    .mobile-filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .filter-chip {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    
+    .light-theme .filter-chip {
+        background-color: rgba(0,0,0,0.05);
+    }
+    
+    .filter-chip.active {
+        background-color: #1E90FF;
+        color: white;
+    }
+    
+    /* Enhanced tooltips for mobile */
+    .mobile-tooltip {
+        position: fixed;
+        display: none;
+        background-color: rgba(30, 30, 30, 0.9);
+        color: white;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        max-width: 80%;
+        z-index: 9999;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .light-theme .mobile-tooltip {
+        background-color: rgba(240, 240, 240, 0.9);
+        color: black;
+    }
+    
+    .mobile-tooltip.visible {
+        display: block;
+    }
+    
+    /* Splash screen style */
+    .splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #121212;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s ease;
+    }
+    
+    .light-theme .splash-screen {
+        background-color: #ffffff;
+    }
+    
+    .splash-content {
+        text-align: center;
+    }
+    
+    .splash-logo {
+        color: #1E90FF;
+        animation: pulse 2s infinite;
+    }
+    
+    .splash-title {
+        margin-top: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #e0e0e0;
+    }
+    
+    .light-theme .splash-title {
+        color: #333;
+    }
+    
+    .splash-spinner {
+        margin: 20px auto 0;
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(30, 144, 255, 0.2);
+        border-top-color: #1E90FF;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+}
+
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+.js-plotly-plot .annotation[data-edit-templateitemname="mobile-hint"] {
+    animation: pulse 2s infinite ease-in-out;
+}
+
+/* Default state - prevent interaction */
+.mobile-map.locked {
+    pointer-events: none !important;
+    touch-action: none !important;
+}
+
+/* After double tap - enable interaction */
+.mobile-map.unlocked {
+    pointer-events: auto !important;
+    touch-action: auto !important;
 }

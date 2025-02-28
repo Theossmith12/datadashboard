@@ -59,6 +59,116 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
             document.body.className = newTheme === 'dark' ? 'dark-theme' : 'light-theme';
             
             return newTheme;
+        },
+        checkMobile: function() {
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                // Show overlays initially on mobile
+                setTimeout(() => {
+                    document.querySelectorAll('.double-tap-overlay').forEach(overlay => {
+                        overlay.style.display = 'flex';
+                    });
+                }, 1000); // Delay to ensure elements are loaded
+            }
+            return isMobile;
         }
     }
+});
+
+// Double tap detection
+let lastTap = 0;
+let tapTimeout;
+let overlayTimeout;
+
+function initializeMobileOverlays() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        document.querySelectorAll('.map-container').forEach(container => {
+            const overlay = container.querySelector('.double-tap-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                
+                // Add touch event listeners
+                container.addEventListener('touchstart', handleTap);
+                container.addEventListener('touchend', handleTap);
+                
+                // Disable map interactions initially
+                const graph = container.querySelector('.js-plotly-plot');
+                if (graph && graph._context) {
+                    graph._context.scrollZoom = false;
+                    graph._context.dragmode = false;
+                }
+            }
+        });
+    }
+}
+
+function handleTap(event) {
+    if (event.type === 'touchstart') {
+        lastTap = new Date().getTime();
+        return;
+    }
+    
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    
+    clearTimeout(tapTimeout);
+    clearTimeout(overlayTimeout);
+    
+    if (tapLength < 500 && tapLength > 0) {
+        // Double tap detected
+        event.preventDefault();
+        const container = event.currentTarget;
+        const overlay = container.querySelector('.double-tap-overlay');
+        const graph = container.querySelector('.js-plotly-plot');
+        
+        if (overlay) {
+            overlay.style.display = 'none';
+            
+            // Re-enable map interactions
+            if (graph && graph._context) {
+                graph._context.scrollZoom = true;
+                graph._context.dragmode = 'pan';
+                
+                // Update the layout to enable interactions
+                Plotly.relayout(graph, {
+                    dragmode: 'pan',
+                    'mapbox.scrollZoom': true
+                });
+            }
+        }
+    } else {
+        // Single tap
+        const container = event.currentTarget;
+        const overlay = container.querySelector('.double-tap-overlay');
+        
+        if (overlay) {
+            overlay.style.display = 'flex';
+            
+            // Auto-hide overlay after 2 seconds
+            overlayTimeout = setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 2000);
+        }
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initializeMobileOverlays);
+
+// Re-initialize on window resize
+window.addEventListener('resize', initializeMobileOverlays);
+
+// Re-initialize when new content is loaded (for Dash updates)
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length) {
+            initializeMobileOverlays();
+        }
+    });
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
 });

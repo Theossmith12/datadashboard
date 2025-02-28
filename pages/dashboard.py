@@ -95,6 +95,12 @@ def layout():
     """
     Main layout for the dashboard page with improved components and responsive design.
     """
+    # Mobile detection components: hidden Store and Interval for polling window width
+    mobile_detection = html.Div([
+        dcc.Store(id="is_mobile", storage_type="memory"),
+        dcc.Interval(id="mobile_interval", interval=1000, n_intervals=0)
+    ])
+
     # Load data for dropdowns using optimized queries
     unique_outcomes = load_unique_values('outcome_type')
     unique_crimes = load_unique_values('crime_type')
@@ -184,7 +190,7 @@ def layout():
         [
             html.H1("UK Crime Data Dashboard", style={'textAlign': 'center', 'marginBottom': '10px'}),
             html.P(
-                 "Explore interactive visualizations of street-level crime data across the UK with real-time filtering and dynamic insights. Analyze crime trends by adjusting outcome types, crime categories, and date ranges to uncover patterns and key statistics. Gain a deeper understanding of crime distribution in different regions through intuitive visual dashboards."
+                "Explore interactive visualizations of street-level crime data across the UK with real-time filtering and dynamic insights. Analyze crime trends by adjusting outcome types, crime categories, and date ranges to uncover patterns and key statistics. Gain a deeper understanding of crime distribution in different regions through intuitive visual dashboards."
                 "Use the filters below to adjust outcome types, crime types, and date ranges.",
                 style={'textAlign': 'center'}
             ),
@@ -200,12 +206,12 @@ def layout():
             html.H3("Borough Analysis", className="section-title mt-4 mb-3", 
                     style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
             html.P("Click on a borough to see how crime types differ from the London average. Blue bars indicate higher rates, red bars show lower rates.", 
-                className="text-muted mb-3"),
+                   className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
                         dcc.Graph(id="borough-map", config={"displayModeBar": False, "scrollZoom": True},
-                                style={"height": "500px"}),
+                                  style={"height": "500px"}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=12, lg=6,
@@ -215,8 +221,8 @@ def layout():
                     dcc.Loading(
                         html.Div([
                             html.Div(id="borough-title", className="borough-title"),
-                            dcc.Graph(id="relative-crime-distribution", config={"displayModeBar": False},
-                                    style={"height": "460px"})
+                            dcc.Graph(id="relative-crime-distribution", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True},
+                                      style={"height": "460px"})
                         ]),
                         type="circle"
                     ),
@@ -229,11 +235,11 @@ def layout():
             html.H3("Crime and Income Analysis", className="section-title mt-5 mb-3", 
                     style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
             html.P("Explore the relationship between average income levels and crime rates across London boroughs.", 
-                className="text-muted mb-3"),
+                   className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="income-crime-correlation", config={"displayModeBar": False}),
+                        dcc.Graph(id="income-crime-correlation", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True}),
                         type="circle"
                     ),
                     width=12
@@ -244,7 +250,7 @@ def layout():
             html.H3("Demographic Analysis", className="section-title mt-5 mb-3", 
                     style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
             html.P("Explore relationships between demographic factors and crime patterns.", 
-                className="text-muted mb-3"),
+                   className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col([
                     html.Label("Select Demographic Factor:"),
@@ -275,7 +281,7 @@ def layout():
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="demographic-correlation", config={"displayModeBar": False}),
+                        dcc.Graph(id="demographic-correlation", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=12, lg=6,
@@ -283,20 +289,19 @@ def layout():
                 ),
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="similarity-map", config={"displayModeBar": False}),
+                        dcc.Graph(id="similarity-map", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=12, lg=6,
                     className="dashboard-col"
-                )
+                )   
             ], className="mb-5 dashboard-row"),
 
             # Row 2: Heatmap with embedded controls
             html.H3("Geographic Crime Distribution", className="section-title mt-5 mb-3", 
                     style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
             html.P("Visualize crime density across London. Darker areas indicate higher concentration of criminal activity.", 
-                className="text-muted mb-3"),
-            # Heatmap controls
+                   className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dbc.Switch(
@@ -312,7 +317,7 @@ def layout():
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="crime-heatmap", config={"displayModeBar": False, "scrollZoom": True}),
+                        dcc.Graph(id="crime-heatmap", config={"displayModeBar": True, "scrollZoom": True, "staticPlot": False}),
                         type="circle"
                     ),
                     width=12
@@ -323,11 +328,11 @@ def layout():
             html.H3("Temporal Patterns and Outcomes", className="section-title mt-5 mb-3", 
                     style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
             html.P("Analyze how crime rates change over time and the distribution of case outcomes.", 
-                className="text-muted mb-3"),
+                   className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="time-series-plot", config={"displayModeBar": False}),
+                        dcc.Graph(id="time-series-plot", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=6, lg=6,
@@ -335,7 +340,7 @@ def layout():
                 ),
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="outcome-bar-chart", config={"displayModeBar": False}),
+                        dcc.Graph(id="outcome-bar-chart", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=6, lg=6,
@@ -347,11 +352,11 @@ def layout():
             html.H3("Crime Types and Yearly Trends", className="section-title mt-5 mb-3", 
                     style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
             html.P("Explore the distribution of crime types and how they've changed over the years.", 
-                className="text-muted mb-3"),
+                   className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="crime-type-bar-chart", config={"displayModeBar": False}),
+                        dcc.Graph(id="crime-type-bar-chart", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=6, lg=6,
@@ -359,7 +364,7 @@ def layout():
                 ),
                 dbc.Col(
                     dcc.Loading(
-                        dcc.Graph(id="yearly-comparison-chart", config={"displayModeBar": False}),
+                        dcc.Graph(id="yearly-comparison-chart", config={"displayModeBar": False, "scrollZoom": False, "staticPlot": True}),
                         type="circle"
                     ),
                     xs=12, sm=12, md=6, lg=6,
@@ -371,7 +376,7 @@ def layout():
             html.H3("Key Findings", className="section-title mt-5 mb-3", 
                     style={"borderBottom": "2px solid #1E90FF", "paddingBottom": "10px"}),
             html.P("Summary of the current data selection and key statistics.", 
-                className="text-muted mb-3"),
+                   className="text-muted mb-3"),
             dbc.Row([
                 dbc.Col(html.Div(id="summary-statistics", className="summary"), width=12)
             ], className="mb-4 dashboard-row"),
@@ -395,118 +400,244 @@ def layout():
 
     return dbc.Container(
         fluid=True,
-        children=[header_section, filters_container, scroll_container]
+        children=[mobile_detection, header_section, filters_container, scroll_container]
     )
+
+
+
+
 # ---------------------------------------------------------------------------------
 # Figures & Charts
 # ---------------------------------------------------------------------------------
-def generate_borough_demographic_correlation(borough_data, selected_demographic, is_light_mode):
+
+def generate_borough_map(filtered_data, is_light_mode, show_labels=True, is_mobile=False):
     """
-    Generate a visualization showing correlation between selected demographic factor and 
-    crime rates by borough, normalized by population.
+    Generate a choropleth map with distinct shaded segments and labels for each borough.
+    Uses database-side aggregation for improved performance.
     """
-    if borough_data.empty or not selected_demographic:
+    # Determine which column to use for borough grouping
+    if 'lad_name' in filtered_data.columns:
+        logger.info("Using 'lad_name' as borough field")
+        borough_field = 'lad_name'
+    elif 'borough' in filtered_data.columns:
+        logger.info("Using 'borough' as borough field")
+        borough_field = 'borough'
+    else:
+        if 'lsoa_name' in filtered_data.columns:
+            borough_field = 'lsoa_name'
+            logger.info("Using 'lsoa_name' as borough field")
+        else:
+            borough_field = 'lsoa_code'
+            logger.info("Using 'lsoa_code' as borough field")
+    
+    # Create filters from the filtered data
+    filters = {}
+    if not filtered_data.empty:
+        if 'outcome_type' in filtered_data.columns:
+            filters['outcome_type'] = filtered_data['outcome_type'].unique().tolist()
+        if 'crime_type' in filtered_data.columns:
+            filters['crime_type'] = filtered_data['crime_type'].unique().tolist()
+        
+        # Get date range if available
+        if 'month' in filtered_data.columns:
+            start_date = filtered_data['month'].min()
+            end_date = filtered_data['month'].max()
+            filters['start_date'] = start_date
+            filters['end_date'] = end_date
+    
+    # Get aggregated borough data directly from database
+    logger.info(f"Getting aggregated borough data with filters: {filters}")
+    
+    # Define metric columns to aggregate
+    metric_columns = {'income': 'AVG'}
+    
+    # Use database-side aggregation
+    borough_data = load_aggregated_data(
+        group_by_columns=[borough_field],
+        metric_columns=metric_columns, 
+        filters=filters
+    )
+    
+    # Rename columns for consistency
+    if 'count' in borough_data.columns:
+        borough_data = borough_data.rename(columns={'count': 'Count'})
+        
+    logger.info(f"Borough data from DB: {borough_data.head().to_dict()}")
+    
+    if borough_data.empty:
         fig = go.Figure()
         fig.add_annotation(
-            text="Select a demographic factor and filter data to view correlations",
+            text="No borough data available",
             xref="paper", yref="paper",
             x=0.5, y=0.5,
-            showarrow=False
+            showarrow=False,
+            font=dict(size=16)
         )
-        return fig
-    
+        return fig, None
+
+    # Build the choropleth
+    fig = go.Figure()
     try:
-        # Ensure we have the right columns
-        if 'Count' not in borough_data.columns and 'count' in borough_data.columns:
-            borough_data = borough_data.rename(columns={'count': 'Count'})
+        # Set showscale based on mobile flag
+        choropleth_trace = go.Choroplethmapbox(
+            geojson=borough_geojson,
+            locations=borough_data[borough_field],
+            z=borough_data['Count'],
+            colorscale=[
+                [0, 'rgb(221,242,253)'],
+                [0.2, 'rgb(167,199,231)'],
+                [0.4, 'rgb(105,158,207)'],
+                [0.6, 'rgb(58,115,180)'],
+                [0.8, 'rgb(8,81,156)'],
+                [1, 'rgb(8,48,107)']
+            ],
+            marker_opacity=0.7,
+            marker_line_width=1.5,
+            marker_line_color='white',
+            featureidkey="properties.name",
+            hovertemplate="<b>%{location}</b><br>Crime Count: %{z}<extra></extra>",
+            customdata=borough_data[borough_field],
+            name='',
+            showscale=(not is_mobile),  # Hide the colorbar on mobile
+            colorbar_title=None if is_mobile else "Crime Count"
+        )
+        fig.add_trace(choropleth_trace)
+
+        # Optional: show borough labels (smaller or hidden on mobile)
+        if show_labels and borough_centroids:
+            label_boroughs = []
+            label_lons = []
+            label_lats = []
+            for b_name, centroid in borough_centroids.items():
+                label_boroughs.append(b_name)
+                label_lons.append(centroid['lon'])
+                label_lats.append(centroid['lat'])
+
+            if label_boroughs:
+                fig.add_trace(go.Scattermapbox(
+                    lon=label_lons,
+                    lat=label_lats,
+                    mode='text',
+                    text=label_boroughs,
+                    textfont=dict(
+                        size=10 if not is_mobile else 8,  # Smaller text on mobile
+                        color='black',
+                        family="Arial, sans-serif",
+                    ),
+                    hoverinfo='none',
+                    showlegend=False
+                ))
         
-        if 'Count' not in borough_data.columns:
-            fig = go.Figure()
-            fig.add_annotation(
-                text="Crime count data not available",
-                xref="paper", yref="paper",
-                x=0.5, y=0.5,
-                showarrow=False
-            )
-            return fig
-            
-        # Create a copy for analysis
-        df = borough_data.copy()
-        
-        # Calculate crime rate (normalized by implicit population through demographic percentages)
-        # This is a rough normalization based on available data
-        df['crime_rate'] = df['Count'] / df[selected_demographic]
-        
-        # Sort by the demographic factor
-        df = df.sort_values(selected_demographic)
-        
-        # Create visualization
-        fig = px.scatter(
-            df,
-            x=selected_demographic,
-            y='Count',
-            size='Count',
-            color='crime_rate',
-            hover_name='lad_name',
-            text='lad_name',
-            title=f'Relationship Between {selected_demographic} and Crime by Borough',
-            labels={
-                selected_demographic: f'{selected_demographic.replace("_percent", "").replace("_", " ").title()} %',
-                'Count': 'Crime Count',
-                'crime_rate': 'Crime Rate (normalized)'
-            },
-            color_continuous_scale="Viridis"
+        # Different map settings for mobile vs desktop
+        zoom_level = 9.5 if not is_mobile else 8.5  # Zoomed out slightly on mobile
+        fig.update_layout(
+            mapbox=dict(
+                style="open-street-map",
+                zoom=zoom_level,
+                center={"lat": 51.5074, "lon": -0.1278}
+            ),
+            margin={"r": 0, "t": 40, "l": 0, "b": 0},
+            title=dict(
+                text="London Borough Crime Distribution" if not is_mobile else "London Boroughs",
+                font=dict(size=16 if not is_mobile else 14)
+            ),
+            # Mobile-specific layout settings
+            clickmode='event+select' if is_mobile else 'event',
+            dragmode=False if is_mobile else 'pan',
+            # Ensure the map is interactive
+            uirevision=True,
+            # Make sure clicks are captured
+            hovermode='closest'
         )
         
-        # Add trend line
-        try:
-            from scipy import stats
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                df[selected_demographic], df['Count']
-            )
-            
-            x_range = [df[selected_demographic].min(), df[selected_demographic].max()]
-            y_predicted = [slope * x + intercept for x in x_range]
-            
-            fig.add_trace(
-                go.Scatter(
-                    x=x_range,
-                    y=y_predicted,
-                    mode='lines',
-                    name=f'Trend (r²={r_value**2:.2f})',
-                    line=dict(color='rgba(255,0,0,0.7)', width=2, dash='dash')
+        # Mobile-specific adjustments
+        if is_mobile:
+            fig.update_layout(
+                height=350,
+                # Additional mobile-specific settings
+                modebar=dict(
+                    remove=['pan', 'zoom', 'select', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d']
                 )
             )
-            
-            # Add correlation annotation
-            fig.add_annotation(
-                x=0.05, y=0.95,
-                xref="paper", yref="paper",
-                text=f"Correlation: {r_value:.2f}",
-                showarrow=False,
-                font=dict(size=12),
-                bgcolor="rgba(255,255,255,0.7)",
-                bordercolor="black",
-                borderwidth=1
-            )
-        except Exception as e:
-            logger.error(f"Error adding trend line: {e}")
-        
-        fig = update_fig_layout(fig, is_light_mode)
-        return fig
-        
     except Exception as e:
-        logger.error(f"Error generating borough demographic correlation: {e}")
+        logger.error(f"Error generating borough map: {e}")
         fig = go.Figure()
         fig.add_annotation(
-            text=f"Error: {str(e)}",
+            text=f"Error generating borough map: {str(e)}",
             xref="paper", yref="paper",
             x=0.5, y=0.5,
-            showarrow=False
+            showarrow=False,
+            font=dict(size=16)
         )
-        return fig
 
-def generate_borough_similarity_map(borough_data, reference_borough, selected_demographic, is_light_mode):
+    fig = update_fig_layout(fig, is_light_mode)
+
+    # Prepare crime data by borough & crime_type for relative comparison
+    borough_crime_stats = {}
+    try:
+        # Use aggregated data for crime type stats by borough
+        crime_type_agg = load_aggregated_data(
+            group_by_columns=[borough_field, 'crime_type'],
+            filters=filters
+        )
+        if 'count' in crime_type_agg.columns and 'Count' not in crime_type_agg.columns:
+            crime_type_agg = crime_type_agg.rename(columns={'count': 'Count'})
+        
+        # Get total crimes by borough
+        borough_totals = crime_type_agg.groupby(borough_field)['Count'].sum().reset_index()
+        borough_totals.columns = [borough_field, 'total_crimes']
+        
+        # Get total crimes by type
+        type_totals = crime_type_agg.groupby('crime_type')['Count'].sum().reset_index()
+        type_totals.columns = ['crime_type', 'total_type_crimes']
+        
+        # Calculate total crimes
+        total_crimes = crime_type_agg['Count'].sum()
+
+        for b_name in crime_type_agg[borough_field].unique():
+            borough_total = borough_totals.loc[
+                borough_totals[borough_field] == b_name, 'total_crimes'
+            ].values[0]
+            sub_df = crime_type_agg[crime_type_agg[borough_field] == b_name].copy()
+
+            if not sub_df.empty:
+                results = []
+                for _, row in sub_df.iterrows():
+                    crime_type = row['crime_type']
+                    count_val = row['Count']
+                    total_for_type = type_totals.loc[
+                        type_totals['crime_type'] == crime_type, 'total_type_crimes'
+                    ].values[0]
+                    actual_proportion = count_val / borough_total
+                    expected_proportion = total_for_type / total_crimes if total_crimes else 0
+
+                    relative_frequency = (
+                        actual_proportion / expected_proportion
+                        if expected_proportion != 0
+                        else np.nan
+                    )
+
+                    results.append({
+                        'crime_type': crime_type,
+                        'count': count_val,
+                        'proportion': actual_proportion,
+                        'expected_proportion': expected_proportion,
+                        'relative_frequency': relative_frequency
+                    })
+                borough_crime_stats[b_name] = sorted(results, key=lambda x: x['relative_frequency'], reverse=True)
+    except Exception as e:
+        logger.error(f"Error calculating borough crime stats: {e}")
+
+    return fig, borough_crime_stats
+
+
+
+
+
+
+
+
+def generate_borough_similarity_map(borough_data, reference_borough, selected_demographic, is_light_mode, is_mobile=False):
     """
     Generate a map showing boroughs with similar demographic profiles to the selected reference borough.
     """
@@ -544,6 +675,12 @@ def generate_borough_similarity_map(borough_data, reference_borough, selected_de
         df['similarity'] = 100 * (1 - df['diff'] / max_diff)
         
         # Create choropleth map
+        title = f'Boroughs with Similar {selected_demographic.replace("_percent", "").replace("_", " ").title()} % to {reference_borough}'
+        
+        # Create shorter title for mobile
+        if is_mobile:
+            title = f'Similar {selected_demographic.replace("_percent", "").replace("_", " ").title()} to {reference_borough}'
+        
         fig = px.choropleth_mapbox(
             df,
             geojson=borough_geojson,
@@ -551,16 +688,35 @@ def generate_borough_similarity_map(borough_data, reference_borough, selected_de
             color='similarity',
             featureidkey="properties.name",
             center={"lat": 51.5074, "lon": -0.1278},
-            zoom=9,
+            zoom=9 if not is_mobile else 8.5,  # Zoomed out slightly on mobile
             mapbox_style="open-street-map",
             opacity=0.7,
             labels={'similarity': 'Similarity %'},
             color_continuous_scale="Viridis",
             range_color=[0, 100],
-            title=f'Boroughs with Similar {selected_demographic.replace("_percent", "").replace("_", " ").title()} % to {reference_borough}'
+            title=title
         )
         
         fig = update_fig_layout(fig, is_light_mode)
+        
+        # Mobile-specific adjustments
+        if is_mobile:
+            fig.update_layout(
+                height=350,  # Smaller height for mobile
+                dragmode=False,  # Disable dragging/panning
+                showlegend=False,  # Hide legend
+                margin={"r": 10, "t": 40, "l": 10, "b": 10},  # Tighter margins
+                title=dict(
+                    font=dict(size=14)  # Smaller title font
+                ),
+                coloraxis_colorbar=dict(
+                    len=0.7,  # Shorter colorbar
+                    thickness=15,  # Thicker for touch targets
+                    x=1.0,  # Position further right
+                    y=0.5  # Center vertically
+                )
+            )
+        
         return fig
         
     except Exception as e:
@@ -574,8 +730,7 @@ def generate_borough_similarity_map(borough_data, reference_borough, selected_de
         )
         return fig
 
-
-def generate_relative_crime_distribution(borough_crime_data, borough_name, is_light_mode):
+def generate_relative_crime_distribution(borough_crime_data, borough_name, is_light_mode, is_mobile=False):
     """
     Generate a bar chart that shows how crimes in a borough differ from the overall average.
     """
@@ -594,20 +749,42 @@ def generate_relative_crime_distribution(borough_crime_data, borough_name, is_li
             xref="paper", yref="paper",
             x=0.5, y=0.5,
             showarrow=False,
-            font=dict(size=16)
+            font=dict(size=16 if not is_mobile else 14)
         )
         fig = update_fig_layout(fig, is_light_mode)
+        
+        if is_mobile:
+            fig.update_layout(
+                height=350,
+                showlegend=False,
+                dragmode=False
+            )
+            
         return fig
 
     crime_data = borough_crime_data[borough_name]
     sorted_data = sorted(crime_data, key=lambda x: x['relative_frequency'], reverse=True)
 
-    # Show top 5 and bottom 5
-    top_5 = sorted_data[:5]
-    bottom_5 = sorted_data[-5:] if len(sorted_data) > 5 else []
-    display_data = top_5 + bottom_5
+    # Determine how many items to show based on mobile vs desktop
+    if is_mobile:
+        # Show fewer items on mobile - top 3 and bottom 2
+        top_n = 3
+        bottom_n = 2
+    else:
+        # Desktop - show more items
+        top_n = 5
+        bottom_n = 5
+        
+    # Show top N and bottom N
+    top_items = sorted_data[:top_n]
+    bottom_items = sorted_data[-bottom_n:] if len(sorted_data) > bottom_n else []
+    display_data = top_items + bottom_items
 
     crime_types = [item['crime_type'] for item in display_data]
+    # Truncate long crime type names on mobile
+    if is_mobile:
+        crime_types = [ct[:20] + "..." if len(ct) > 20 else ct for ct in crime_types]
+        
     rel_frequencies = [item['relative_frequency'] for item in display_data]
     counts = [item['count'] for item in display_data]
     proportions = [f"{item['proportion']*100:.1f}%" for item in display_data]
@@ -640,11 +817,17 @@ def generate_relative_crime_distribution(borough_crime_data, borough_name, is_li
         hovertext=hover_texts,
         hoverinfo='text'
     ))
+    
+    # Create title - shorter for mobile
+    title = f"Crimes Relative to London Average in {borough_name}"
+    if is_mobile:
+        title = f"{borough_name} vs London Avg"
+        
     fig.update_layout(
-        title=f"Crimes Relative to London Average in {borough_name}",
-        xaxis_title="Relative Frequency (1.0 = Average)",
+        title=title,
+        xaxis_title="Relative Frequency (1.0 = Average)" if not is_mobile else "Rel. Frequency",
         yaxis_title="Crime Type",
-        height=460,
+        height=460 if not is_mobile else 350,
         xaxis=dict(
             zeroline=False,
             gridcolor='lightgray',
@@ -653,22 +836,44 @@ def generate_relative_crime_distribution(borough_crime_data, borough_name, is_li
         ),
         yaxis=dict(autorange="reversed")
     )
-    fig.add_annotation(
-        x=0.5,
-        y=1.05,
-        xref="paper",
-        yref="paper",
-        text="Shows how crime types compare to London average (1.0 = average occurrence)",
-        showarrow=False,
-        font=dict(size=12),
-        align="center"
-    )
+    
+    # Add annotation - simpler for mobile
+    if not is_mobile:
+        fig.add_annotation(
+            x=0.5,
+            y=1.05,
+            xref="paper",
+            yref="paper",
+            text="Shows how crime types compare to London average (1.0 = average occurrence)",
+            showarrow=False,
+            font=dict(size=12),
+            align="center"
+        )
 
     fig = update_fig_layout(fig, is_light_mode)
+    
+    # Mobile-specific adjustments
+    if is_mobile:
+        fig.update_layout(
+            showlegend=False,
+            dragmode=False,
+            margin={"r": 10, "t": 40, "l": 10, "b": 40},
+            title=dict(
+                font=dict(size=14)
+            ),
+            xaxis=dict(
+                title=dict(font=dict(size=12)),
+                tickfont=dict(size=10)
+            ),
+            yaxis=dict(
+                title=dict(font=dict(size=12)),
+                tickfont=dict(size=10)
+            )
+        )
+    
     return fig
 
-
-def generate_static_heatmap(filtered_data, is_light_mode):
+def generate_static_heatmap(filtered_data, is_light_mode, is_mobile=False):
     """Generate a static density heatmap of crimes with memory optimization."""
     if filtered_data.empty:
         return go.Figure()
@@ -677,7 +882,11 @@ def generate_static_heatmap(filtered_data, is_light_mode):
     df = filtered_data.copy()
     
     # If more than MAX_POINTS, sample down
+    # Use fewer points on mobile for better performance
     MAX_POINTS = 10000
+    if is_mobile:
+        MAX_POINTS = 5000  # Use fewer points on mobile for better performance
+    
     if len(df) > MAX_POINTS:
         logger.info(f"Sampling heatmap data from {len(df)} to {MAX_POINTS} points")
         df = df.sample(n=MAX_POINTS, random_state=42)
@@ -706,9 +915,23 @@ def generate_static_heatmap(filtered_data, is_light_mode):
     fig.update_traces(opacity=0.5)
     fig = update_fig_layout(fig, is_light_mode)
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    
+    # Mobile-specific adjustments - only hide labels, keep interactivity
+    if is_mobile:
+        # Hide color scale
+        fig.update_layout(
+            coloraxis_showscale=False,
+        )
+        
+        # Remove any title or annotations
+        if hasattr(fig, 'layout') and hasattr(fig.layout, 'annotations'):
+            fig.layout.annotations = []
+        
+        if hasattr(fig, 'layout') and hasattr(fig.layout, 'title'):
+            fig.layout.title = None
+    
     return fig
-
-def generate_animated_heatmap(filtered_data, is_light_mode):
+def generate_animated_heatmap(filtered_data, is_light_mode, is_mobile=False):
     """Generate an animated density heatmap by month with memory optimization."""
     if filtered_data.empty:
         return go.Figure()
@@ -716,8 +939,10 @@ def generate_animated_heatmap(filtered_data, is_light_mode):
     # Memory optimization: If dataset is large, sample it
     df = filtered_data.copy()
     
-    # Aim for MAX_POINTS per month
+    # Aim for MAX_POINTS per month - use fewer points on mobile
     MAX_POINTS_PER_MONTH = 2000
+    if is_mobile:
+        MAX_POINTS_PER_MONTH = 1000  # Fewer points on mobile for better performance
     
     # Convert to datetime if needed
     if not pd.api.types.is_datetime64_any_dtype(df["month"]):
@@ -761,15 +986,55 @@ def generate_animated_heatmap(filtered_data, is_light_mode):
     )
     
     fig.update_traces(opacity=0.5)
-    fig.update_layout(transition={"duration": 500})
+    
+    # Adjust animation speed - slightly faster on mobile
+    transition_duration = 500
+    if is_mobile:
+        transition_duration = 400  # Slightly faster transitions on mobile
+    
+    fig.update_layout(transition={"duration": transition_duration})
     fig = update_fig_layout(fig, is_light_mode)
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     
+    # Mobile-specific adjustments - only hide labels, keep interactivity
+    if is_mobile:
+        # Hide color scale
+        fig.update_layout(
+            coloraxis_showscale=False,
+        )
+        
+        # Simplify animation controls for mobile
+        fig.update_layout(
+            updatemenus=[{
+                "buttons": [
+                    {
+                        "args": [None, {"frame": {"duration": transition_duration, "redraw": True}}],
+                        "label": "▶",  # Simpler play button
+                        "method": "animate"
+                    }
+                ],
+                "showactive": False,
+                "type": "buttons",
+                "y": 0,
+                "x": 0.1,
+                "xanchor": "right",
+                "yanchor": "top",
+                "pad": {"t": 0, "r": 10},
+                "font": {"size": 16}  # Larger button for mobile
+            }]
+        )
+        
+        # Remove any title or annotations
+        if hasattr(fig, 'layout') and hasattr(fig.layout, 'annotations'):
+            fig.layout.annotations = []
+        
+        if hasattr(fig, 'layout') and hasattr(fig.layout, 'title'):
+            fig.layout.title = None
+    
     return fig
-
 # Add to dashboard.py
 
-def generate_demographic_analyzer(filtered_data, selected_demographic, is_light_mode):
+def generate_demographic_analyzer(filtered_data, selected_demographic, is_light_mode, is_mobile=False):
     """
     Generate a visualization showing correlation between selected demographic groups and crime types.
     
@@ -781,6 +1046,8 @@ def generate_demographic_analyzer(filtered_data, selected_demographic, is_light_
         Selected demographic column (e.g., 'youth_male_percent')
     is_light_mode : bool
         Whether the dashboard is in light mode
+    is_mobile : bool
+        Whether the client is on a mobile device
     """
     if filtered_data.empty or not selected_demographic:
         return go.Figure()
@@ -820,6 +1087,18 @@ def generate_demographic_analyzer(filtered_data, selected_demographic, is_light_
     corr_df = pd.DataFrame(crime_correlations)
     corr_df = corr_df.sort_values('correlation')
     
+    # On mobile, limit to top and bottom correlations if there are many
+    if is_mobile and len(corr_df) > 10:
+        # Get the 5 highest and 5 lowest correlations
+        high_corr = corr_df.nlargest(5, 'correlation')
+        low_corr = corr_df.nsmallest(5, 'correlation')
+        corr_df = pd.concat([low_corr, high_corr]).sort_values('correlation')
+    
+    # Create title - shorten for mobile
+    title = f'Correlation of {selected_demographic} with Different Crime Types'
+    if is_mobile:
+        title = f'Correlation: {selected_demographic.replace("_percent", "").replace("_", " ")}'
+    
     # Create bar chart of correlations
     fig = px.bar(
         corr_df,
@@ -827,7 +1106,7 @@ def generate_demographic_analyzer(filtered_data, selected_demographic, is_light_
         x='correlation',
         color='correlation',
         color_continuous_scale='RdBu',
-        title=f'Correlation of {selected_demographic} with Different Crime Types',
+        title=title,
         labels={
             'crime_type': 'Crime Type',
             'correlation': 'Correlation Coefficient',
@@ -846,20 +1125,53 @@ def generate_demographic_analyzer(filtered_data, selected_demographic, is_light_
         line=dict(color="black", width=1, dash="dash")
     )
     
-    # Add annotations for interpretation
-    fig.add_annotation(
-        x=0.5, y=1.05,
-        xref="paper", yref="paper",
-        text="Positive values indicate higher crime rates in areas with higher demographic percentages",
-        showarrow=False,
-        font=dict(size=10),
-        align="center"
-    )
+    # Add annotations for interpretation (only on desktop)
+    if not is_mobile:
+        fig.add_annotation(
+            x=0.5, y=1.05,
+            xref="paper", yref="paper",
+            text="Positive values indicate higher crime rates in areas with higher demographic percentages",
+            showarrow=False,
+            font=dict(size=10),
+            align="center"
+        )
     
     fig = update_fig_layout(fig, is_light_mode)
+    
+    # Mobile-specific adjustments
+    if is_mobile:
+        fig.update_layout(
+            height=350,  # Reduced height
+            showlegend=False,  # Hide legend
+            dragmode=False,  # Disable interactivity
+            coloraxis_showscale=False,  # Hide color scale
+            margin={"r": 10, "t": 40, "l": 10, "b": 40},  # Tighter margins
+            title=dict(
+                font=dict(size=14)  # Smaller title
+            ),
+            xaxis=dict(
+                title=dict(
+                    text="Correlation",  # Shorter axis title
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)  # Smaller tick labels
+            ),
+            yaxis=dict(
+                title=dict(
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)  # Smaller tick labels
+            )
+        )
+        
+        # Truncate long crime type names on mobile
+        for i, d in enumerate(fig.data):
+            if hasattr(d, 'y') and isinstance(d.y, list):
+                d.y = [y[:15] + '...' if isinstance(y, str) and len(y) > 15 else y for y in d.y]
+    
     return fig
 
-def generate_similarity_map(filtered_data, reference_lsoa, is_light_mode):
+def generate_similarity_map(filtered_data, reference_lsoa, is_light_mode, is_mobile=False):
     """
     Generate a map showing areas with similar demographic profiles to the selected reference LSOA.
     
@@ -871,6 +1183,8 @@ def generate_similarity_map(filtered_data, reference_lsoa, is_light_mode):
         The LSOA code to use as reference
     is_light_mode : bool
         Whether the dashboard is in light mode
+    is_mobile : bool
+        Whether the client is on a mobile device
     """
     if filtered_data.empty or not reference_lsoa:
         return go.Figure()
@@ -883,112 +1197,172 @@ def generate_similarity_map(filtered_data, reference_lsoa, is_light_mode):
         'senior_male_percent', 'senior_female_percent'
     ]
     
-    # Get unique demographic values by LSOA
-    lsoa_demographics = filtered_data.groupby('lsoa_code')[demographic_cols].mean().reset_index()
-    
-    # Get reference LSOA demographics
-    if reference_lsoa in lsoa_demographics['lsoa_code'].values:
-        ref_demo = lsoa_demographics[lsoa_demographics['lsoa_code'] == reference_lsoa].iloc[0]
-    else:
-        return go.Figure()
-    
-    # Calculate similarity (Euclidean distance) for each LSOA
-    for col in demographic_cols:
-        lsoa_demographics[f'{col}_diff'] = (lsoa_demographics[col] - ref_demo[col])**2
-    
-    # Calculate overall similarity score (lower is more similar)
-    lsoa_demographics['similarity_score'] = np.sqrt(
-        lsoa_demographics[[f'{col}_diff' for col in demographic_cols]].sum(axis=1)
-    )
-    
-    # Normalize to 0-100 scale (100 is most similar)
-    max_score = lsoa_demographics['similarity_score'].max()
-    lsoa_demographics['similarity_index'] = 100 * (1 - lsoa_demographics['similarity_score'] / max_score)
-    
-    # Create choropleth map
-    fig = px.choropleth_mapbox(
-        lsoa_demographics,
-        geojson=lsoa_geojson,
-        locations='lsoa_code',
-        color='similarity_index',
-        featureidkey="properties.LSOA21CD",
-        mapbox_style="open-street-map",
-        zoom=9,
-        center={"lat": 51.5074, "lon": -0.1278},
-        opacity=0.7,
-        color_continuous_scale="Viridis",
-        range_color=[0, 100],
-        labels={'similarity_index': 'Similarity (%)'},
-        title=f'Areas with Similar Demographic Profile to {reference_lsoa}'
-    )
-    
-    fig = update_fig_layout(fig, is_light_mode)
-    return fig
+    try:
+        # Get unique demographic values by LSOA
+        lsoa_demographics = filtered_data.groupby('lsoa_code')[demographic_cols].mean().reset_index()
+        
+        # Get reference LSOA demographics
+        if reference_lsoa in lsoa_demographics['lsoa_code'].values:
+            ref_demo = lsoa_demographics[lsoa_demographics['lsoa_code'] == reference_lsoa].iloc[0]
+        else:
+            fig = go.Figure()
+            fig.add_annotation(
+                text=f"Reference LSOA {reference_lsoa} not found in current data",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                showarrow=False
+            )
+            return fig
+        
+        # Calculate similarity (Euclidean distance) for each LSOA
+        for col in demographic_cols:
+            lsoa_demographics[f'{col}_diff'] = (lsoa_demographics[col] - ref_demo[col])**2
+        
+        # Calculate overall similarity score (lower is more similar)
+        lsoa_demographics['similarity_score'] = np.sqrt(
+            lsoa_demographics[[f'{col}_diff' for col in demographic_cols]].sum(axis=1)
+        )
+        
+        # Normalize to 0-100 scale (100 is most similar)
+        max_score = lsoa_demographics['similarity_score'].max()
+        lsoa_demographics['similarity_index'] = 100 * (1 - lsoa_demographics['similarity_score'] / max_score)
+        
+        # Create title - shortened for mobile
+        title = f'Areas with Similar Demographic Profile to {reference_lsoa}'
+        if is_mobile:
+            title = f'Similar to {reference_lsoa}'
+        
+        # Create choropleth map
+        fig = px.choropleth_mapbox(
+            lsoa_demographics,
+            geojson=lsoa_geojson,
+            locations='lsoa_code',
+            color='similarity_index',
+            featureidkey="properties.LSOA21CD",
+            mapbox_style="open-street-map",
+            zoom=9 if not is_mobile else 8.5,  # Slightly more zoomed out on mobile
+            center={"lat": 51.5074, "lon": -0.1278},
+            opacity=0.7,
+            color_continuous_scale="Viridis",
+            range_color=[0, 100],
+            labels={'similarity_index': 'Similarity (%)'},
+            title=title
+        )
+        
+        fig = update_fig_layout(fig, is_light_mode)
+        
+        # Mobile-specific adjustments
+        if is_mobile:
+            fig.update_layout(
+                height=350,  # Reduced height
+                coloraxis_showscale=False,  # Hide color scale
+                margin={"r": 10, "t": 40, "l": 10, "b": 10},  # Tighter margins
+                title=dict(
+                    font=dict(size=14)  # Smaller title font
+                )
+            )
+            
+            # Focus on the most similar areas (highlight top matches)
+            # This helps make the map more readable on mobile
+            top_matches = lsoa_demographics.nlargest(10, 'similarity_index')['lsoa_code'].tolist()
+            
+            # Add markers for top matches
+            if top_matches:
+                # Get coordinates for top matches (assuming they're in the geojson)
+                marker_lats = []
+                marker_lons = []
+                
+                for feature in lsoa_geojson['features']:
+                    lsoa_code = feature['properties'].get('LSOA21CD')
+                    if lsoa_code in top_matches:
+                        # Try to get centroid coordinates
+                        try:
+                            coords = feature['geometry']['coordinates']
+                            if feature['geometry']['type'] == 'Polygon':
+                                # Calculate rough centroid for polygon
+                                points = coords[0]  # Outer ring
+                                lat_sum = sum(point[1] for point in points)
+                                lon_sum = sum(point[0] for point in points)
+                                marker_lats.append(lat_sum / len(points))
+                                marker_lons.append(lon_sum / len(points))
+                        except (KeyError, IndexError, TypeError):
+                            continue
+                
+                # Add markers for top matches if we found coordinates
+                if marker_lats and marker_lons:
+                    fig.add_trace(go.Scattermapbox(
+                        lat=marker_lats,
+                        lon=marker_lons,
+                        mode='markers',
+                        marker=dict(
+                            size=8,
+                            color='yellow',
+                            opacity=0.8
+                        ),
+                        hoverinfo='skip'
+                    ))
+        
+        return fig
+        
+    except Exception as e:
+        logger.error(f"Error generating similarity map: {e}")
+        fig = go.Figure()
+        fig.add_annotation(
+            text=f"Error generating similarity map: {str(e)}",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False
+        )
+        return fig
 
-def generate_income_crime_correlation(filtered_data, is_light_mode):
+
+def generate_income_crime_correlation(filtered_data, is_light_mode, is_mobile):
     """Generate a scatter plot showing correlation between income and crime rates by borough."""
     if filtered_data.empty:
         return go.Figure()
     
-    # Get aggregated data by borough with income 
-    filters = {'census_year': 2015}
+    # Standardize count column name.
+    if 'count' in filtered_data.columns:
+        filtered_data = filtered_data.rename(columns={'count': 'crime_count'})
+    elif 'Count' in filtered_data.columns:
+        filtered_data = filtered_data.rename(columns={'Count': 'crime_count'})
+    
     borough_data = load_aggregated_data(
         group_by_columns=['lad_name'],
         metric_columns={'income': 'AVG'},
-        filters=filters
+        filters={'census_year': 2015}
     )
+    if borough_data.empty:
+        return go.Figure()
     
-    # First, check what columns are actually available
-    logger.info(f"Borough data columns: {borough_data.columns.tolist()}")
-    
-    # Check if 'count' or 'Count' exists and standardize the column name
-    count_col = None
     if 'count' in borough_data.columns:
-        count_col = 'count'
         borough_data = borough_data.rename(columns={'count': 'crime_count'})
     elif 'Count' in borough_data.columns:
-        count_col = 'Count'
         borough_data = borough_data.rename(columns={'Count': 'crime_count'})
-    else:
-        # If neither exists, create a placeholder
-        logger.warning("Count column not found in borough data")
-        borough_data['crime_count'] = 0
     
-    # Add text for hover
-    borough_data['hover_text'] = borough_data['lad_name'] + '<br>' + \
-                                'Avg Income: £' + borough_data['income'].round(2).astype(str) + '<br>' + \
-                                'Crime Count: ' + borough_data['crime_count'].astype(str)
-    
-    # Create the scatter plot
     fig = px.scatter(
         borough_data,
         x='income',
-        y='crime_count',  # Use the standardized column name
+        y='crime_count',
         hover_name='lad_name',
         text='lad_name',
         title='Crime Count vs. Average Income by Borough',
         labels={
             'income': 'Average Income (£)',
-            'crime_count': 'Number of Street level crime',  # Use the standardized column name
+            'crime_count': 'Number of Street Level Crimes',
             'lad_name': 'Borough'
         },
-        size='crime_count',  # Use the standardized column name
+        size='crime_count',
         color='income',
-        color_continuous_scale='RdBu_r'  # Red for low income, blue for high income
+        color_continuous_scale='RdBu_r'
     )
     
-    # Add regression line
-    if len(borough_data) > 2:
+    if len(borough_data) > 2 and not is_mobile:
         try:
             from scipy import stats
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                borough_data['income'],
-                borough_data['crime_count']  # Use the standardized column name
-            )
-            
+            slope, intercept, r_value, p_value, std_err = stats.linregress(borough_data['income'], borough_data['crime_count'])
             x_range = [borough_data['income'].min(), borough_data['income'].max()]
             y_predicted = [slope * x + intercept for x in x_range]
-            
             fig.add_trace(
                 go.Scatter(
                     x=x_range,
@@ -1002,7 +1376,37 @@ def generate_income_crime_correlation(filtered_data, is_light_mode):
             logger.error(f"Error generating regression line: {e}")
     
     fig = update_fig_layout(fig, is_light_mode)
+    
+    if is_mobile:
+        fig.update_layout(
+            coloraxis_showscale=False,
+            showlegend=False,
+            height=350,
+            margin={"r": 10, "t": 40, "l": 40, "b": 40},
+            title=dict(
+                font=dict(size=14)
+            ),
+            xaxis=dict(
+                title=dict(
+                    text="Average Income (£)",
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)
+            ),
+            yaxis=dict(
+                title=dict(
+                    text="Number of Crimes",
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)
+            )
+        )
+    
     return fig
+
+
+
+
 
 
 def generate_demographic_correlation(filtered_data, selected_demographic, is_light_mode):
@@ -1211,86 +1615,256 @@ def generate_similarity_map(filtered_data, reference_lsoa, is_light_mode):
         return fig
 
 
-
-
-def generate_time_series(filtered_data, is_light_mode):
+def generate_time_series(filtered_data, is_light_mode, is_mobile):
     """Generate a line chart of total crimes over time."""
     if filtered_data.empty:
         return go.Figure()
-
+    
     grouped = filtered_data.groupby("month", observed=True).size().reset_index(name="Count")
     grouped.sort_values("month", inplace=True)
-
+    
     fig = px.line(grouped, x="month", y="Count", title="Crime Over Time")
     fig = update_fig_layout(fig, is_light_mode)
     fig.update_layout(margin={"r": 0, "t": 40, "l": 0, "b": 0})
+    
+    if is_mobile:
+        fig.update_layout(showlegend=False, dragmode=False)
+    
     return fig
 
-
-def generate_outcome_bar_chart(filtered_data, is_light_mode):
+def generate_outcome_bar_chart(filtered_data, is_light_mode, is_mobile):
     """Generate a bar chart showing the counts of each outcome type."""
     if filtered_data.empty:
         return go.Figure()
-
+    
+    # Group by outcome type
     grouped = filtered_data.groupby("outcome_type", observed=True).size().reset_index(name="Count")
+    
+    # If on mobile, limit the number of outcomes shown
+    if is_mobile and len(grouped) > 8:
+        # Sort by count and keep top categories
+        grouped = grouped.sort_values("Count", ascending=False)
+        top_outcomes = grouped.head(7)
+        other_sum = grouped.iloc[7:]["Count"].sum()
+        
+        # Add "Other" category for the rest
+        other_row = pd.DataFrame({"outcome_type": ["Other"], "Count": [other_sum]})
+        grouped = pd.concat([top_outcomes, other_row], ignore_index=True)
+    
+    # Create title - shorter for mobile
+    title = "Outcome Types"
+    if is_mobile:
+        title = "Outcomes"
+    
     fig = px.bar(
         grouped,
-        x="outcome_type",
-        y="Count",
-        title="Outcome Types",
-        labels={"outcome_type": "Outcome", "Count": "Number of Crimes"}
+        x="outcome_type" if not is_mobile else "Count",
+        y="Count" if not is_mobile else "outcome_type",
+        title=title,
+        labels={"outcome_type": "Outcome", "Count": "Number of Crimes"},
+        orientation='v' if not is_mobile else 'h'  # Horizontal bars on mobile
     )
+    
     fig = update_fig_layout(fig, is_light_mode)
-    fig.update_layout(xaxis_tickangle=-45)
+    
+    # Layout adjustments
+    if is_mobile:
+        # Mobile-specific adjustments
+        fig.update_layout(
+            height=350,
+            showlegend=False,
+            dragmode=False,
+            margin={"r": 10, "t": 40, "l": 120, "b": 40},  # More left margin for category names
+            title=dict(
+                font=dict(size=14)
+            ),
+            yaxis=dict(  # Categories on y-axis for mobile (horizontal bars)
+                title=None,  # Remove y-axis title
+                autorange="reversed"  # Put highest values at top
+            ),
+            xaxis=dict(
+                title=dict(
+                    text="Number of Crimes",
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)
+            )
+        )
+        
+        # Truncate long category names on mobile
+        if hasattr(fig.data[0], 'y') and isinstance(fig.data[0].y, list):
+            fig.data[0].y = [str(y)[:15] + '...' if isinstance(y, str) and len(y) > 15 else y for y in fig.data[0].y]
+    else:
+        # Desktop layout
+        fig.update_layout(
+            xaxis_tickangle=-45,
+            height=500
+        )
+    
     return fig
 
 
-def generate_crime_type_bar_chart(filtered_data, is_light_mode):
+def generate_crime_type_bar_chart(filtered_data, is_light_mode, is_mobile):
     """Generate a bar chart showing distribution of crime types."""
     if filtered_data.empty:
         return go.Figure()
-
+    
+    # Group by crime type
     grouped = filtered_data.groupby("crime_type", observed=True).size().reset_index(name="Count")
+    
+    # If on mobile, limit the number of crime types shown
+    if is_mobile and len(grouped) > 8:
+        # Sort by count and keep top categories
+        grouped = grouped.sort_values("Count", ascending=False)
+        top_crimes = grouped.head(7)
+        other_sum = grouped.iloc[7:]["Count"].sum()
+        
+        # Add "Other" category for the rest
+        other_row = pd.DataFrame({"crime_type": ["Other"], "Count": [other_sum]})
+        grouped = pd.concat([top_crimes, other_row], ignore_index=True)
+    
+    # Sort by count for better visualization
+    grouped = grouped.sort_values("Count", ascending=False)
+    
+    # Create title - shorter for mobile
+    title = "Crime Type Distribution"
+    if is_mobile:
+        title = "Crime Types"
+    
     fig = px.bar(
         grouped,
-        x="crime_type",
-        y="Count",
-        title="Crime Type Distribution",
-        labels={"crime_type": "Crime Type", "Count": "Number of Crimes"}
+        x="crime_type" if not is_mobile else "Count",
+        y="Count" if not is_mobile else "crime_type",
+        title=title,
+        labels={"crime_type": "Crime Type", "Count": "Number of Crimes"},
+        orientation='v' if not is_mobile else 'h'  # Horizontal bars on mobile
     )
+    
     fig = update_fig_layout(fig, is_light_mode)
-    fig.update_layout(xaxis_tickangle=-45)
+    
+    # Layout adjustments
+    if is_mobile:
+        # Mobile-specific adjustments
+        fig.update_layout(
+            height=350,
+            showlegend=False,
+            dragmode=False,
+            margin={"r": 10, "t": 40, "l": 120, "b": 40},  # More left margin for category names
+            title=dict(
+                font=dict(size=14)
+            ),
+            yaxis=dict(  # Categories on y-axis for mobile (horizontal bars)
+                title=None,  # Remove y-axis title
+                autorange="reversed"  # Put highest values at top
+            ),
+            xaxis=dict(
+                title=dict(
+                    text="Number of Crimes",
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)
+            )
+        )
+        
+        # Truncate long category names on mobile
+        if hasattr(fig.data[0], 'y') and isinstance(fig.data[0].y, list):
+            fig.data[0].y = [str(y)[:15] + '...' if isinstance(y, str) and len(y) > 15 else y for y in fig.data[0].y]
+    else:
+        # Desktop layout
+        fig.update_layout(
+            xaxis_tickangle=-45,
+            height=500
+        )
+    
     return fig
 
 
-def generate_yearly_comparison_chart(filtered_data, is_light_mode):
+def generate_yearly_comparison_chart(filtered_data, is_light_mode, is_mobile):
     """Generate a bar chart comparing crime types across different years."""
     if filtered_data.empty or "month" not in filtered_data.columns:
         return go.Figure()
-
+    
     df = filtered_data.copy()
     df["year"] = df["month"].dt.year
-    grouped = df.groupby(["year", "crime_type"], observed=True).size().reset_index(name="Count")
-    if grouped.empty:
-        return go.Figure()
-
-    fig = px.bar(
-        grouped,
-        x="year",
-        y="Count",
-        color="crime_type",
-        barmode="group",
-        title="Yearly Comparison of Crime Types"
-    )
+    
+    # For mobile, we need a simpler visualization
+    if is_mobile:
+        # Just show total counts by year
+        yearly_totals = df.groupby("year").size().reset_index(name="Count")
+        
+        fig = px.bar(
+            yearly_totals,
+            x="year",
+            y="Count",
+            title="Crimes by Year",
+            labels={"year": "Year", "Count": "Number of Crimes"}
+        )
+    else:
+        # For desktop, show the full breakdown by crime type
+        grouped = df.groupby(["year", "crime_type"], observed=True).size().reset_index(name="Count")
+        
+        if grouped.empty:
+            return go.Figure()
+        
+        fig = px.bar(
+            grouped,
+            x="year",
+            y="Count",
+            color="crime_type",
+            barmode="group",
+            title="Yearly Comparison of Crime Types"
+        )
+    
     fig = update_fig_layout(fig, is_light_mode)
+    
+    # Mobile-specific adjustments
+    if is_mobile:
+        fig.update_layout(
+            height=350,
+            showlegend=False,
+            dragmode=False,
+            margin={"r": 10, "t": 40, "l": 40, "b": 40},
+            title=dict(
+                font=dict(size=14)
+            ),
+            xaxis=dict(
+                title=dict(
+                    text="Year",
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)
+            ),
+            yaxis=dict(
+                title=dict(
+                    text="Number of Crimes",
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=10)
+            )
+        )
+        
+        # Add value labels on bars for mobile
+        for data in fig.data:
+            fig.add_trace(go.Scatter(
+                x=data.x,
+                y=data.y,
+                mode='text',
+                text=[f"{y:,}" for y in data.y],
+                textposition='top center',
+                textfont=dict(size=10),
+                showlegend=False
+            ))
+    
     return fig
 
+
 # ---------------------------------------------------------------------------------
 # Main Dashboard Callback
 # ---------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------
 # Main Dashboard Callback
 # ---------------------------------------------------------------------------------
+
 @dash.callback(
     [
         Output("borough-map", "figure"),
@@ -1311,53 +1885,41 @@ def generate_yearly_comparison_chart(filtered_data, is_light_mode):
         Input("date-picker-range", "end_date"),
         Input("heatmap-mode-switch", "value"),
         Input("borough-map", "clickData"),
-        Input("show-borough-labels", "value")
+        Input("show-borough-labels", "value"),
+        Input("is_mobile", "data")   # NEW: Mobile flag input
     ],
     [
         State("borough-map", "relayoutData"),
         State("theme-container", "data-theme")
     ]
 )
-
-
 def update_dashboard(outcomes, crimes, start_date, end_date, heatmap_switch,
-                     click_data, show_labels, relayout_data, data_theme):
+                     click_data, show_labels, is_mobile, relayout_data, data_theme):
     """
     Main callback for updating the dashboard components.
-    'data-theme' attribute determines whether we're in light or dark mode.
+    'data-theme' determines light/dark mode.
+    is_mobile indicates if the client is on a mobile device.
     """
-    # Log which input changed
     ctx = dash.callback_context
     if ctx.triggered:
         logger.info(f"Main callback triggered by: {ctx.triggered[0]['prop_id']}")
     else:
         logger.info("Main callback triggered without a specific input change.")
 
-    # interpret data_theme
     is_light_mode = (data_theme == 'light')
-    logger.info(f"is_light_mode={is_light_mode}")
+    logger.info(f"is_light_mode={is_light_mode}, is_mobile={is_mobile}")
 
-    # Log the states of key inputs
-    logger.info(f"Current filter states -> Outcomes: {outcomes}, Crimes: {crimes}, "
-                f"Date Range: {start_date} to {end_date}, Heatmap Switch: {heatmap_switch}, "
-                f"Show Labels: {show_labels}, clickData: {click_data}")
-    
-    # Create a filters dictionary for potential future use
     filters = {
         'outcome_type': outcomes,
         'crime_type': crimes,
-        'census_year': 2015  # Always filter to 2015 data
+        'census_year': 2015
     }
     if start_date and end_date:
         filters['start_date'] = start_date
         filters['end_date'] = end_date
 
-    # Load and filter data
     crime_data = load_data()
-    df = crime_data[
-        crime_data["outcome_type"].isin(outcomes) &
-        crime_data["crime_type"].isin(crimes)
-    ]
+    df = crime_data[crime_data["outcome_type"].isin(outcomes) & crime_data["crime_type"].isin(crimes)]
     if start_date and end_date:
         sdate = pd.to_datetime(start_date)
         edate = pd.to_datetime(end_date)
@@ -1365,89 +1927,55 @@ def update_dashboard(outcomes, crimes, start_date, end_date, heatmap_switch,
     df = df.sort_values("month")
     logger.info(f"Dashboard update: {len(df)} records after filtering.")
 
-    # Create borough map + borough_crime_data
-    # Changed the function call from generate_borough_map to generate_dashboard_components
-    # and passed only the required arguments
-    borough_map_fig, borough_crime_data = generate_borough_map(df, is_light_mode, show_labels)
-
+    borough_map_fig, borough_crime_data = generate_borough_map(df, is_light_mode, show_labels, is_mobile)
     selected_borough = None
     borough_title = html.H4("Click on a borough to see relative crime distribution", className="text-center")
 
-    # Process clickData to find which borough was clicked
     if click_data and isinstance(click_data, dict) and "points" in click_data:
         try:
             points = click_data["points"][0]
-            curve_number = points.get("curveNumber", -1)
-
-            # Log the points data
             logger.info(f"Click event details: {points}")
-
-            # Determine borough from click event
-            if curve_number == 0:
-                if "location" in points:
-                    selected_borough = points["location"]
-                    logger.info(f"Found borough in location: {selected_borough}")
-                elif "customdata" in points:
-                    selected_borough = points["customdata"]
-                    logger.info(f"Found borough in customdata: {selected_borough}")
-                else:
-                    logger.warning("Choropleth trace clicked, but no 'location' or 'customdata' found.")
-            elif curve_number == 1:
-                if "text" in points:
-                    selected_borough = points["text"]
-                    logger.info(f"Found borough in text (label trace): {selected_borough}")
-                else:
-                    logger.warning("Label trace clicked, but no 'text' found.")
+            
+            # Try different ways to get the borough name
+            if "location" in points:
+                selected_borough = points["location"]
+            elif "customdata" in points and points["customdata"]:
+                # Handle both single value and array customdata
+                selected_borough = points["customdata"][0] if isinstance(points["customdata"], list) else points["customdata"]
+            elif "text" in points:
+                selected_borough = points["text"]
+            elif "hovertext" in points:
+                selected_borough = points["hovertext"]
+                
+            # Log the selected borough for debugging
+            logger.info(f"Selected borough: {selected_borough}")
+            
+            if selected_borough and borough_crime_data and selected_borough in borough_crime_data:
+                borough_title = html.H4(f"Crime Pattern Analysis: {selected_borough}", className="text-center")
+                logger.info(f"Successfully updated title for borough: {selected_borough}")
             else:
-                logger.warning(f"Unknown curveNumber clicked: {curve_number}. Points: {points}")
-
-            # Log available borough names from the aggregated data
-            if borough_crime_data:
-                available_boroughs = list(borough_crime_data.keys())
-                logger.info(f"Available boroughs in aggregated data: {available_boroughs}")
-            else:
-                logger.warning("borough_crime_data is empty or None.")
-
-            # Check if the selected borough is in the aggregated data
-            if selected_borough and borough_crime_data:
-                if selected_borough in borough_crime_data:
-                    borough_title = html.H4(f"Crime Pattern Analysis: {selected_borough}", className="text-center")
-                else:
-                    logger.warning(f"Selected borough '{selected_borough}' not found in aggregated data.")
-                    # Optionally, log possible alternatives or apply normalization here.
-                    selected_borough = None
-
-        except (KeyError, IndexError) as e:
+                selected_borough = None
+                logger.warning(f"Borough not found in crime data: {selected_borough}")
+        except Exception as e:
             logger.error(f"Error processing clickData: {e}")
             selected_borough = None
             borough_title = html.H4("Error processing borough selection", className="text-center")
 
-    # Generate the relative crime distribution figure
-    crime_distribution_fig = generate_relative_crime_distribution(borough_crime_data, selected_borough, is_light_mode)
+    # Generate all figures with mobile flag
+    crime_distribution_fig = generate_relative_crime_distribution(borough_crime_data, selected_borough, is_light_mode, is_mobile)
+    income_correlation_fig = generate_income_crime_correlation(df, is_light_mode, is_mobile)
+    heatmap_fig = generate_animated_heatmap(df, is_light_mode, is_mobile) if heatmap_switch else generate_static_heatmap(df, is_light_mode, is_mobile)
+    ts_fig = generate_time_series(df, is_light_mode, is_mobile)
+    outcome_bar_fig = generate_outcome_bar_chart(df, is_light_mode, is_mobile)
+    crime_type_bar_fig = generate_crime_type_bar_chart(df, is_light_mode, is_mobile)
+    yearly_comp_fig = generate_yearly_comparison_chart(df, is_light_mode, is_mobile)
 
-    # Generate the income crime correlation figure (new)
-    income_correlation_fig = generate_income_crime_correlation(df, is_light_mode)
-    
-    # Heatmap (animated or static) with memory optimization
-    if heatmap_switch:
-        heatmap_fig = generate_animated_heatmap(df, is_light_mode)
-    else:
-        heatmap_fig = generate_static_heatmap(df, is_light_mode)
-
-    ts_fig = generate_time_series(df, is_light_mode)
-    outcome_bar_fig = generate_outcome_bar_chart(df, is_light_mode)
-    crime_type_bar_fig = generate_crime_type_bar_chart(df, is_light_mode)
-    yearly_comp_fig = generate_yearly_comparison_chart(df, is_light_mode)
-
-    # Summary Statistics
     total = len(df)
     if total > 0:
         common_crime = df["crime_type"].value_counts().idxmax()
         common_outcome = df["outcome_type"].value_counts().idxmax()
         date_min = df["month"].min().date()
         date_max = df["month"].max().date()
-        
-        # Add income statistics if available
         avg_income = df["income"].mean() if "income" in df.columns else "N/A"
     else:
         common_crime = "N/A"
@@ -1471,7 +1999,7 @@ def update_dashboard(outcomes, crimes, start_date, end_date, heatmap_switch,
         borough_map_fig,
         crime_distribution_fig,
         borough_title,
-        income_correlation_fig,  # New return value
+        income_correlation_fig,
         heatmap_fig,
         ts_fig,
         outcome_bar_fig,
@@ -1481,10 +2009,7 @@ def update_dashboard(outcomes, crimes, start_date, end_date, heatmap_switch,
     )
 
 
-
-
-
-def generate_borough_map(filtered_data, is_light_mode, show_labels=True):
+def generate_borough_map(filtered_data, is_light_mode, show_labels=True, is_mobile=False):
     """
     Generate a choropleth map with distinct shaded segments and labels for each borough.
     Uses database-side aggregation for improved performance.
@@ -1532,8 +2057,7 @@ def generate_borough_map(filtered_data, is_light_mode, show_labels=True):
         filters=filters
     )
     
-    # Rename columns for consistency with the rest of the function
-    # Rename columns for consistency with the rest of the function
+    # Rename columns for consistency
     if 'count' in borough_data.columns:
         borough_data = borough_data.rename(columns={'count': 'Count'})
         
@@ -1553,7 +2077,8 @@ def generate_borough_map(filtered_data, is_light_mode, show_labels=True):
     # Build the choropleth
     fig = go.Figure()
     try:
-        fig.add_trace(go.Choroplethmapbox(
+        # Set showscale based on mobile flag
+        choropleth_trace = go.Choroplethmapbox(
             geojson=borough_geojson,
             locations=borough_data[borough_field],
             z=borough_data['Count'],
@@ -1568,14 +2093,16 @@ def generate_borough_map(filtered_data, is_light_mode, show_labels=True):
             marker_opacity=0.7,
             marker_line_width=1.5,
             marker_line_color='white',
-            colorbar_title="Crime Count",
             featureidkey="properties.name",
             hovertemplate="<b>%{location}</b><br>Crime Count: %{z}<extra></extra>",
             customdata=borough_data[borough_field],
-            name=''
-        ))
+            name='',
+            showscale=(not is_mobile),  # Hide the colorbar on mobile
+            colorbar_title=None if is_mobile else "Crime Count"
+        )
+        fig.add_trace(choropleth_trace)
 
-        # Optional: show borough labels
+        # Optional: show borough labels (smaller or hidden on mobile)
         if show_labels and borough_centroids:
             label_boroughs = []
             label_lons = []
@@ -1592,26 +2119,45 @@ def generate_borough_map(filtered_data, is_light_mode, show_labels=True):
                     mode='text',
                     text=label_boroughs,
                     textfont=dict(
-                        size=10,
+                        size=10 if not is_mobile else 8,  # Smaller text on mobile
                         color='black',
                         family="Arial, sans-serif",
                     ),
                     hoverinfo='none',
                     showlegend=False
                 ))
-
+        
+        # Different map settings for mobile vs desktop
+        zoom_level = 9.5 if not is_mobile else 8.5  # Zoomed out slightly on mobile
         fig.update_layout(
             mapbox=dict(
                 style="open-street-map",
-                zoom=9.5,
+                zoom=zoom_level,
                 center={"lat": 51.5074, "lon": -0.1278}
             ),
             margin={"r": 0, "t": 40, "l": 0, "b": 0},
             title=dict(
-                text="London Borough Crime Distribution - Click to view relative crime patterns",
-                font=dict(size=16)
-            )
+                text="London Borough Crime Distribution" if not is_mobile else "London Boroughs",
+                font=dict(size=16 if not is_mobile else 14)
+            ),
+            # Mobile-specific layout settings
+            clickmode='event+select' if is_mobile else 'event',
+            dragmode=False if is_mobile else 'pan',
+            # Ensure the map is interactive
+            uirevision=True,
+            # Make sure clicks are captured
+            hovermode='closest'
         )
+        
+        # Mobile-specific adjustments
+        if is_mobile:
+            fig.update_layout(
+                height=350,
+                # Additional mobile-specific settings
+                modebar=dict(
+                    remove=['pan', 'zoom', 'select', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d']
+                )
+            )
     except Exception as e:
         logger.error(f"Error generating borough map: {e}")
         fig = go.Figure()
@@ -1683,7 +2229,6 @@ def generate_borough_map(filtered_data, is_light_mode, show_labels=True):
 
     return fig, borough_crime_stats
 
-
 # Fix for the update_dashboard function
 
 
@@ -1753,7 +2298,7 @@ def update_demographic_analysis(selected_demographic, reference_borough,  # Chan
         )
         
         # Generate the charts with borough-level data
-        correlation_fig = generate_borough_demographic_correlation(
+        correlation_fig = generate_demographic_correlation(
             borough_demo_data, selected_demographic, is_light_mode
         )
         similarity_fig = generate_borough_similarity_map(

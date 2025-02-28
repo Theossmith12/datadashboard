@@ -1,16 +1,24 @@
 import os
 import pathlib
 import requests
-from flask import session, redirect, url_for, request, render_template_string
+from flask import session, redirect, url_for, request, render_template_string, make_response
 from google_auth_oauthlib.flow import Flow
 import google.auth.transport.requests
 import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, State
+import logging
+import urllib.parse  
+
+# Set up logging for troubleshooting
+logging.basicConfig(level=logging.DEBUG, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('crime_dashboard')
 
 # Allow insecure transport for local testing (DO NOT USE IN PRODUCTION)
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
+# Set the redirect URI
 REDIRECT_URI = "http://127.0.0.1:8050/oauth2callback"
 
 # Create the Dash app and get the Flask server
@@ -20,8 +28,12 @@ app.title = "UK Crime Data Dashboard"
 server = app.server
 server.static_folder = 'assets'  # Path to assets folder
 
-# Set the secret key for session management (replace with a strong key in production)
-server.secret_key = os.getenv('SECRET_KEY', 'your-very-secret-key')
+# Set secret key and cookie configuration for session management
+SECRET_KEY = os.getenv('SECRET_KEY', 'your-very-secret-key-change-in-production')
+server.secret_key = SECRET_KEY
+server.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+server.config['SESSION_COOKIE_DOMAIN'] = None  # Ensure this matches your URL for local testing
+logger.info(f"Server secret key configured. Cookie domain set to {server.config['SESSION_COOKIE_DOMAIN']}.")
 
 # Initialize the cache (make sure cache_config.py is in your project directory)
 from cache_config import cache
@@ -37,7 +49,14 @@ SCOPES = [
 ]
 GOOGLE_CLIENT_SECRETS_FILE = os.path.join(pathlib.Path(__file__).parent, 'client_secret.json')
 
-# Login page template
+if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
+    logger.error(f"Client secrets file not found: {GOOGLE_CLIENT_SECRETS_FILE}")
+else:
+    logger.info(f"Client secrets file loaded from: {GOOGLE_CLIENT_SECRETS_FILE}")
+
+# ---------------------------
+# Login Page HTML with Styles
+# ---------------------------
 login_page_html = """
 <!doctype html>
 <html lang="en">
@@ -269,120 +288,184 @@ login_page_html = """
 </html>
 """
 
-# Authentication routes and middleware
+# ---------------------------
+# Routes
+# ---------------------------
 @server.route('/login')
 def login():
-    # If already logged in, redirect to dashboard
-    if 'logged_in' in session:
+    logger.debug("Login route accessed.")
+    logger.debug(f"Current session keys before login: {list(session.keys())}")
+    
+    if session.get('logged_in'):
+        logger.debug(f"User already logged in: {session.get('user', {}).get('email', 'no-email')}")
         return redirect('/dashboard')
-        
-    # Create the OAuth flow
-    flow = Flow.from_client_secrets_file(
-        GOOGLE_CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true'
-    )
-    session['state'] = state
-    return redirect(authorization_url)
+    
+    try:
+        flow = Flow.from_client_secrets_file(
+            GOOGLE_CLIENT_SECRETS_FILE,
+            scopes=SCOPES,
+            redirect_uri=REDIRECT_URI
+        )
+        extra_params = {
+            'access_type': 'offline',
+            'include_granted_scopes': 'true',
+            'hd': '*'
+        }
+        user_agent = request.user_agent.string.lower() if request.user_agent else ""
+        logger.debug(f"User agent: {user_agent}")
+        is_mobile = any(x in user_agent for x in ['android', 'iphone', 'ipad', 'mobile'])
+        if is_mobile:
+            extra_params.update({
+                'prompt': 'consent',
+                'approval_prompt': 'force'
+            })
+            logger.debug("Detected mobile browser; added mobile-specific OAuth parameters.")
+            
+        authorization_url, state = flow.authorization_url(**extra_params)
+        session['state'] = state
+        logger.debug(f"OAuth state saved in session: {state}")
+        return redirect(authorization_url)
+    except Exception as e:
+        logger.error(f"Error in login route: {e}")
+        return render_template_string("<h1>Authentication Error</h1><p>Please try again later.</p>")
 
 @server.route('/oauth2callback')
 def oauth2callback():
-    state = session.get('state')
+    logger.debug("OAuth callback route accessed.")
+    logger.debug(f"Session keys at callback entry: {list(session.keys())}")
     
-    # Create the OAuth flow with the current state
-    flow = Flow.from_client_secrets_file(
-        GOOGLE_CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        state=state,
-        redirect_uri=REDIRECT_URI
-    )
-    
-    # Exchange auth code for access token
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-
-    # Retrieve user info from Google
-    response = requests.get(
-        'https://www.googleapis.com/oauth2/v2/userinfo',
-        headers={'Authorization': f'Bearer {credentials.token}'}
-    )
-    user_info = response.json()
-    
-    # Store user info in session
-    session['user'] = user_info
-    session['logged_in'] = True
-    
-    # Redirect to dashboard
-    return redirect('/dashboard')
+    try:
+        state = session.get('state')
+        if not state:
+            logger.error("No state found in session. Possible CSRF issue or session expiration.")
+            return redirect('/')
+        
+        flow = Flow.from_client_secrets_file(
+            GOOGLE_CLIENT_SECRETS_FILE,
+            scopes=SCOPES,
+            state=state,
+            redirect_uri=REDIRECT_URI
+        )
+        flow.fetch_token(authorization_response=request.url)
+        credentials = flow.credentials
+        logger.debug("Fetched token from Google OAuth.")
+        
+        response = requests.get(
+            'https://www.googleapis.com/oauth2/v2/userinfo',
+            headers={'Authorization': f'Bearer {credentials.token}'}
+        )
+        user_info = response.json()
+        logger.debug(f"User info received: {user_info}")
+        
+        session['user'] = user_info
+        session['logged_in'] = True
+        session['token'] = credentials.token
+        logger.debug(f"Session updated after login: {list(session.keys())}")
+        
+        return redirect('/dashboard')
+    except Exception as e:
+        logger.error(f"Error in OAuth callback: {e}")
+        session.clear()
+        return redirect('/')
 
 @server.route('/logout')
 def logout():
+    logger.debug(f"Logout route accessed. Session keys before logout: {list(session.keys())}")
+    user_email = session.get('user', {}).get('email', 'unknown')
+    logger.debug(f"Logging out user: {user_email}")
     session.clear()
-    return redirect('/')
+    logger.debug("Session cleared on logout.")
+    
+    response = make_response(redirect('/'))
+    response.set_cookie('session', '', expires=0, path='/', samesite='Lax')
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    logger.debug("Logout response prepared with expired cookies and cache control headers.")
+    return response
 
 @server.before_request
 def require_login():
-    # Bypass authentication if SKIP_AUTH is set (for testing)
-    if os.getenv('SKIP_AUTH', '0') == '1':
-        return
-    if request.path.startswith('/assets/'):
-        return
-
-    # List of paths that don't require authentication
-    allowed_paths = ['/login', '/oauth2callback', '/logout']
+    logger.debug(f"Before request: path={request.path}, method={request.method}")
+    logger.debug(f"Session keys: {list(session.keys())}")
     
-    # Allow static assets and specific routes without authentication
-    if request.path.startswith('/_dash/') or request.path.startswith('/assets/') or request.path in allowed_paths:
+    if any([
+        request.path.startswith('/assets/'),
+        request.path.startswith('/_dash/'),
+        request.path in ['/login', '/oauth2callback', '/logout', '/check-session'],
+        request.path.startswith('/favicon'),
+    ]):
         return
-        
-    # If the root path ('/') is accessed and user is not logged in, render the login page
-    if request.path == '/' and 'logged_in' not in session:
+    
+    if request.path == '/' and not session.get('logged_in'):
+        logger.debug("User not logged in; serving login page at root.")
         return render_template_string(login_page_html)
-        
-    # For all other protected routes, redirect to login if not authenticated
-    if 'logged_in' not in session:
+    
+    if not session.get('logged_in'):
+        logger.info(f"Unauthorized access attempt to {request.path}; redirecting to login.")
+        if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
+            return make_response({"error": "Unauthorized", "redirect": "/"}, 401)
         return redirect('/')
+
+@server.route('/check-session', methods=['GET'])
+def check_session():
+    logged_in = session.get('logged_in', False)
+    email = session.get('user', {}).get('email', 'not logged in')
+    logger.debug(f"Session check: logged_in={logged_in}, email={email}, keys={list(session.keys())}")
+    return {
+        "logged_in": logged_in,
+        "email": email if logged_in else None,
+        "session_keys": list(session.keys()),
+    }
 
 @server.route('/')
 def index():
-    # If user is logged in, redirect to the dashboard
-    if 'logged_in' in session or os.getenv('SKIP_AUTH', '0') == '1':
+    if session.get('logged_in') or os.getenv('SKIP_AUTH', '0') == '1':
+        logger.debug("Index route: user logged in, redirecting to dashboard.")
         return redirect('/dashboard')
-        
-    # Otherwise, render the login page
+    logger.debug("Index route: user not logged in, serving login page.")
     return render_template_string(login_page_html)
 
-# Define a route for the dashboard to handle direct access
 @server.route('/dashboard')
 def dash_app_route():
-    # Check if user is authenticated (handled by require_login middleware)
-    # Return a basic HTML that loads the Dash app
+    logger.debug(f"Dashboard route accessed. Session keys: {list(session.keys())}")
+    logger.debug(f"User info in session: {session.get('user', {}).get('email', 'not logged in')}")
     return """
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
-        <title>London Crime Dashboard</title>
-        <meta http-equiv="refresh" content="0;url=/" />
+      <meta charset="UTF-8" />
+      <title>London Crime Dashboard</title>
+      <meta http-equiv="refresh" content="3;url=/" />
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #fff; display: flex; align-items: center; justify-content: center; }
+        .loader { text-align: center; }
+        .spinner { width: 80px; height: 80px; border: 8px solid rgba(255, 255, 255, 0.2); border-top: 8px solid #ffffff; border-radius: 50%; animation: spin 1.5s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { margin-top: 20px; font-size: 1.2rem; letter-spacing: 0.05rem; }
+      </style>
     </head>
     <body>
-        <p>Loading dashboard...</p>
+      <div class="loader">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading dashboard...</div>
+      </div>
     </body>
     </html>
     """
 
 # ---------------------------
-# Dash App Layout and Routing
+# Dash App Layout and Callbacks
 # ---------------------------
 app.layout = html.Div(
     id="theme-container",
-    className="dark-theme",  # Start in dark theme
+    className="dark-theme",
     **{'data-theme': 'dark'},
     children=[
         dcc.Location(id="url", refresh=False),
+        html.Div(id="session-status", style={"display": "none"}),
         html.Div(
             className="navbar",
             children=[
@@ -424,7 +507,7 @@ app.layout = html.Div(
     [Input("url", "pathname")]
 )
 def render_page_content(pathname):
-    # Import page modules as needed (ensure these are imported only after cache initialization)
+    logger.debug(f"Rendering page for pathname: {pathname}")
     if pathname in ["/", "/dashboard"]:
         from pages import dashboard
         return dashboard.layout()
@@ -434,20 +517,78 @@ def render_page_content(pathname):
     elif pathname == "/feedback":
         from pages import feedback
         return feedback.layout()
+    elif pathname == "/settings":
+        return html.Div([
+            html.H2("Settings", style={"textAlign": "center"}),
+            html.Div([
+                html.Button("Toggle Dark/Light Mode", id="theme-toggle-btn-settings", className="btn btn-secondary", style={"width": "100%", "marginBottom": "10px"}),
+                html.Button("Logout", id="logout-btn-settings", className="btn btn-danger", style={"width": "100%"})
+            ], style={"maxWidth": "400px", "margin": "auto"}),
+            html.Div([
+                dcc.Link("Back to Dashboard", href="/dashboard", className="btn btn-primary", style={"width": "100%", "marginTop": "20px"})
+            ], style={"maxWidth": "400px", "margin": "auto", "textAlign": "center"})
+        ])
+    logger.debug("Page not found; returning 404.")
     return "404 Page Not Found"
 
-# Add a callback for the logout button
+# Client-side callbacks for logout and theme toggling
 app.clientside_callback(
     """
     function(n_clicks) {
         if (n_clicks > 0) {
-            window.location.href = '/logout';
+            localStorage.removeItem('dash_app_state');
+            sessionStorage.clear();
+            var logoutForm = document.createElement('form');
+            logoutForm.method = 'GET';
+            logoutForm.action = '/logout';
+            document.body.appendChild(logoutForm);
+            logoutForm.submit();
+            return 'logout-btn logging-out';
+        }
+        return 'logout-btn';
+    }
+    """,
+    Output('logout-btn', 'className'),
+    Input('logout-btn', 'n_clicks')
+)
+
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks > 0) {
+            localStorage.removeItem('dash_app_state');
+            sessionStorage.clear();
+            var logoutForm = document.createElement('form');
+            logoutForm.method = 'GET';
+            logoutForm.action = '/logout';
+            document.body.appendChild(logoutForm);
+            logoutForm.submit();
         }
         return '';
     }
     """,
-    Output('logout-btn', 'className'),  # We don't actually change the class, just need an output
-    Input('logout-btn', 'n_clicks')
+    Output('logout-btn-settings', 'className'),
+    Input('logout-btn-settings', 'n_clicks')
+)
+
+app.clientside_callback(
+    """
+    function(n_intervals) {
+        if (n_intervals > 0 && n_intervals % 300 === 0) {
+            fetch('/check-session')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.logged_in) {
+                        window.location.href = '/';
+                    }
+                })
+                .catch(error => console.error('Session check error:', error));
+        }
+        return '';
+    }
+    """,
+    Output('session-status', 'children'),
+    Input('interval-component', 'n_intervals')
 )
 
 @app.callback(
@@ -477,11 +618,7 @@ app.clientside_callback(
     """
     function(n_clicks, currentTheme) {
         if (n_clicks === 0) return currentTheme;
-        if (currentTheme === 'dark') {
-            return 'light';
-        } else {
-            return 'dark';
-        }
+        return currentTheme === 'dark' ? 'light' : 'dark';
     }
     """,
     Output('theme-container', 'data-theme'),
@@ -489,13 +626,21 @@ app.clientside_callback(
     State('theme-container', 'data-theme')
 )
 
-# Register page callbacks from your modules
+# Interval component for session checks
+app.layout.children.append(dcc.Interval(
+    id='interval-component',
+    interval=1000,  # 1 second
+    n_intervals=0
+))
+
+# Register page callbacks from modules
 from pages import dashboard, comparison, feedback
 dashboard.register_callbacks(app)
 comparison.register_callbacks(app)
 feedback.register_callbacks(app)
 
-
 if __name__ == "__main__":
-    
+    logger.info(f"Starting Crime Dashboard app with SKIP_AUTH={os.getenv('SKIP_AUTH', '0')}")
+    logger.info(f"Using REDIRECT_URI: {REDIRECT_URI}")
+    logger.info(f"Client secrets file: {GOOGLE_CLIENT_SECRETS_FILE}")
     app.run_server(debug=False)

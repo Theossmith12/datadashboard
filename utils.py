@@ -46,3 +46,51 @@ def update_fig_layout(fig, is_light_mode):
         updated_fig.update_yaxes(gridcolor=colors['grid'], color=colors['text'])
     
     return updated_fig
+def apply_mobile_layout(fig, is_mobile, title=None):
+    """
+    Apply mobile-specific layout adjustments to a figure.
+    
+    Parameters:
+    -----------
+    fig : plotly.Figure
+        The figure to update
+    is_mobile : bool
+        Whether the client is on a mobile device
+    title : str, optional
+        Title for the chart (shortened for mobile)
+    
+    Returns:
+    --------
+    plotly.Figure
+        The updated figure
+    """
+    if is_mobile:
+        # Mobile optimizations
+        layout_updates = dict(
+            height=350,  # Smaller height for mobile
+            dragmode=False,  # Disable dragging
+            showlegend=False,  # Hide legend
+            margin=dict(l=40, r=10, t=40, b=40),  # Tighter margins
+            xaxis=dict(
+                tickangle=-45,  # Angled labels
+                nticks=5  # Fewer ticks
+            ),
+            yaxis=dict(
+                nticks=5  # Fewer ticks
+            ),
+            title=dict(
+                text=title[:30] + "..." if title and len(title) > 30 else title,
+                font=dict(size=14)
+            ) if title else None
+        )
+        fig.update_layout(**layout_updates)
+        
+        # Simplify traces for mobile
+        for trace in fig.data:
+            if hasattr(trace, 'marker'):
+                # Smaller markers on mobile
+                if hasattr(trace.marker, 'size'):
+                    if isinstance(trace.marker.size, (int, float)):
+                        trace.marker.size = max(4, trace.marker.size * 0.7)
+        
+    return fig
