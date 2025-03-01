@@ -310,8 +310,8 @@ def layout():
                         value=False,
                         className="mb-3"
                     ),
-                    width={"size": 6, "offset": 3},
-                    style={"textAlign": "center"}
+                width={"size": 6, "offset": 3},
+                style={"textAlign": "center"}
                 )
             ]),
             dbc.Row([
@@ -2422,7 +2422,9 @@ def debug_click_data(click_data):
 
 
 def register_callbacks(app):
-    """
-    Register any theme or additional callbacks needed by the dashboard.
-    """
+    """Register all dashboard callbacks."""
+    
+    # Register theme callbacks
     register_theme_callbacks(app)
+    
+    # Rest of your callbacks...

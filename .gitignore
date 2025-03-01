@@ -20,7 +20,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
+app.py
 # Environment variables
 .env
 .env.local
