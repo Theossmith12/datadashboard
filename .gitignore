@@ -33,6 +33,7 @@ app.py
 *.swo
 
 # Sensitive files
+client_secret.json
 client_secret.geojson
 *.pem
 *.key
