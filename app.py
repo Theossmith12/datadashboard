@@ -8,7 +8,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, State
 import logging
-import urllib.parse  
+import urllib.parse 
 
 # Set up logging for troubleshooting
 logging.basicConfig(level=logging.DEBUG, 
@@ -385,6 +385,8 @@ def logout():
     logger.debug("Logout response prepared with expired cookies and cache control headers.")
     return response
 
+
+""""
 @server.before_request
 def require_login():
     logger.debug(f"Before request: path={request.path}, method={request.method}")
@@ -407,6 +409,10 @@ def require_login():
         if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
             return make_response({"error": "Unauthorized", "redirect": "/"}, 401)
         return redirect('/')
+"""
+
+
+
 
 @server.route('/check-session', methods=['GET'])
 def check_session():
